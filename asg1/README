@@ -1,0 +1,65 @@
+/*************************************************************************
+	> File Name: read.cpp
+	> Author: Maoting Ren 
+	> Mail: mren@g.clemson.edu
+	> Created Time: Mon 07 Sep 2015 02:05:55 AM EDT
+ ************************************************************************/ 
+
+this project can read image, write image, manipulate image, and display image.
+And in base.h, I define a structure to store image, and this class also have a this kind of public member varible, imageData. So it's derived class, like Read(in read.h), Write(in write.h), Manipulation(in manipulation.h), also have a this kind of member varible 
+ 
+ 
+I store the image in a structure, the structure is in base.h, here is it:
+    typedef struct Data{
+        int width;
+        int height;
+        int channels;
+        GLubyte* pixels;
+        Data& operator=(const Data& originalData)
+        {
+            width = originalData.width;
+            height = originalData.height;
+            channels = originalData.channels;
+            memcpy(pixels, originalData.pixels, width*height*channels);
+        }
+    }ImageData;
+and you can see details in base.h
+
+1. display function
+    this function is in oiioview.cpp::display(), and in this function I draw 3 channel image and 4 channel image in two ways;
+
+2. write function
+    this funtion is in write.h and write.cpp, the function is 
+        bool writeData(char* filename, ImageData* originalImageData);
+    this function will write the image into a file which named 'filename', for details please go to see write.h and write.cpp 
+
+3. read function
+    this function is in read.h and read.cpp, the function is
+        bool readImage(char* filename);
+    it will read image and store it into the class member varible imageData
+
+4. manipulation function
+    you can flip the image herizontally through keyboard key 'f', and flip the image vertically through key 'i', also you can display a single channel of current image by key 'r', 'g', 'b', this three functions are in manipulation.h and manipulation.cpp, and here is the three function,
+        ImageData& herizontalFlip(ImageData* inputImageData);
+        ImageData& verticalFlip(ImageData* inputImageData);
+        ImageData& getSingleChannel(ImageData* inputImageData, int channel);
+    also you can see details in manipulation.h and manipulation.cpp
+    in addition, when you provide more than one image, you can play the image one by one through key left arrow and right arrow, you can find the function in oiioview.cpp
+        void specialKeyHandle(int key, int x, int y)
+    and scaling up and scaling down are working well too, you can see details in oiioview.cpp::display(), and 
+        oiioview.cpp::adjustScale() function is to change image scaling ratio when the size of window changed. 
+
+5. command line behavior
+    you can use command like this to run this program:
+        $> ./oiioview teapot.jpg out.jpg
+    which means you will read teapot.jpg and write data into out.jpg
+    also you can read more than one image, like this:
+        $> ./oiioview teapot.jpg triangle.png cube.ppm out.png
+    this means you will read teapot.jpg triangle.png and cube.ppm, then you write data into out.png
+
+6. interaction
+    you can exit by hit 'q' or 'ESC' to exit this program, and you can write current image into provided filename by hit 'w' at anytime, also when you click the image, you can get the current column ,row, and color of the pixel.
+
+    I have been compeleted all the requirements. It's a hard work, and cost me so much time!!! But it's really funny!!!
+
+
