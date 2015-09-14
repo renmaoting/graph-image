@@ -26,7 +26,7 @@ public:
 	
 	Shape shape;
 	//Color3 leftColor, rightColor, shapeColor;
-	HSV_Color leftColor, rightColor, shapeColor;
+	HSV_Color leftColor, rightColor, shapeColor, shapeLeftColor;
 	Record record;
 	bool displayMirror;
 

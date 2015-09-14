@@ -87,7 +87,8 @@ enum Commands {
    CMD_SHAPE_RECTANGLE,
    CMD_SHAPE_CIRCLE,
    CMD_SHAPE_POLYGON,
-   CMD_MOVEMENT_CLEAR
+   CMD_MOVEMENT_CLEAR,
+   CMD_EDIT_SHAPELEFT_COLOR
 };
 //#define CMD_EXPORT_IMAGE 10000
 
@@ -195,11 +196,12 @@ void RenderText3 ( char *text )
 }
 
 void DisplayNoHelp() {
-   unsigned char leftColor[3], rightColor[3], shapeColor[3];
+   unsigned char leftColor[3], rightColor[3], shapeColor[3], shapeLeftColor[3];
 
    HSVtoRGB (prj.leftColor.h, prj.leftColor.s, prj.leftColor.v, leftColor[0], leftColor[1], leftColor[2]);
    HSVtoRGB (prj.rightColor.h, prj.rightColor.s, prj.rightColor.v, rightColor[0], rightColor[1], rightColor[2]);
    HSVtoRGB (prj.shapeColor.h, prj.shapeColor.s, prj.shapeColor.v, shapeColor[0], shapeColor[1], shapeColor[2]);
+   HSVtoRGB (prj.shapeLeftColor.h, prj.shapeLeftColor.s, prj.shapeLeftColor.v, shapeLeftColor[0], shapeLeftColor[1], shapeLeftColor[2]);
 
    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
@@ -237,32 +239,35 @@ void DisplayNoHelp() {
    glEnd();
    glPopMatrix();
 
-   // Display Mirror Shape
-   if ( prj.displayMirror ) {
-      glPushMatrix();
-      Vertex *vert = prj.shape.GetVerts();
-      glColor3ubv ( shapeColor );
-      glTranslatef ( -prj.shape.posX, prj.shape.posY, 0 );
-      glScalef ( -prj.shape.scaleX, prj.shape.scaleY, 1 );
-      glBegin ( GL_POLYGON );
-      while ( vert != NULL ) {
-         glVertex2fv ( vert->v );
-         vert = vert->Next;
-      }
-      glEnd();
-      glPopMatrix();
-   }
-
-   glPopMatrix();
+    // Display Mirror Shape
+   {
+       glPushMatrix();
+    Vertex *vert = prj.shape.GetVerts();
+    if ( prj.displayMirror )
+        glColor3ubv ( shapeColor );
+    else
+        glColor3ubv ( shapeLeftColor );
+    glTranslatef ( -prj.shape.posX, prj.shape.posY, 0 );
+    glScalef ( -prj.shape.scaleX, prj.shape.scaleY, 1 );
+    glBegin ( GL_POLYGON );
+    while ( vert != NULL ) {
+        glVertex2fv ( vert->v );
+        vert = vert->Next;
+    }
+    glEnd();
+    glPopMatrix();
+    }
+    glPopMatrix();
 }
 
 void Display()
 {
-   unsigned char leftColor[3], rightColor[3], shapeColor[3];
+   unsigned char leftColor[3], rightColor[3], shapeColor[3], shapeLeftColor[3];
 
    HSVtoRGB (prj.leftColor.h, prj.leftColor.s, prj.leftColor.v, leftColor[0], leftColor[1], leftColor[2]);
    HSVtoRGB (prj.rightColor.h, prj.rightColor.s, prj.rightColor.v, rightColor[0], rightColor[1], rightColor[2]);
    HSVtoRGB (prj.shapeColor.h, prj.shapeColor.s, prj.shapeColor.v, shapeColor[0], shapeColor[1], shapeColor[2]);
+   HSVtoRGB (prj.shapeLeftColor.h, prj.shapeLeftColor.s, prj.shapeLeftColor.v, shapeLeftColor[0], shapeLeftColor[1], shapeLeftColor[2]);
 
    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
@@ -299,26 +304,27 @@ void Display()
    }
    glEnd();
    glPopMatrix();
+    {
+    glPushMatrix();
+    Vertex *vert = prj.shape.GetVerts();
+    if ( prj.displayMirror )
+        glColor3ubv ( shapeColor );
+    else
+        glColor3ubv ( shapeLeftColor );
+    glTranslatef ( -prj.shape.posX, prj.shape.posY, 0 );
+    glScalef ( -prj.shape.scaleX, prj.shape.scaleY, 1 );
+    glBegin ( GL_POLYGON );
+    while ( vert != NULL ) {
+        glVertex2fv ( vert->v );
+        vert = vert->Next;
+    }
+    glEnd();
+    glPopMatrix();
+    }
 
-   // Display Mirror Shape
-   if ( prj.displayMirror ) {
-      glPushMatrix();
-      Vertex *vert = prj.shape.GetVerts();
-      glColor3ubv ( shapeColor );
-      glTranslatef ( -prj.shape.posX, prj.shape.posY, 0 );
-      glScalef ( -prj.shape.scaleX, prj.shape.scaleY, 1 );
-      glBegin ( GL_POLYGON );
-      while ( vert != NULL ) {
-         glVertex2fv ( vert->v );
-         vert = vert->Next;
-      }
-      glEnd();
-      glPopMatrix();
-   }
-
-   glPopMatrix();
-
-   if ( showColors ) {
+    glPopMatrix();
+  
+  if ( showColors ) {
       glMatrixMode ( GL_PROJECTION );
       glPushMatrix();
       glLoadIdentity();
@@ -554,6 +560,9 @@ void Menu( int item )
       case CMD_EDIT_SHAPE_COLOR:
          selectedColor = &prj.shapeColor;
          break;
+      case CMD_EDIT_SHAPELEFT_COLOR:
+         selectedColor = &prj.shapeLeftColor;
+         break;
 
       case CMD_SHAPE_RECTANGLE:
          prj.shape.SetRectangle();
@@ -643,6 +652,9 @@ void Keyboard ( unsigned char key, int x, int y )
             break;
          case '3':
             Menu ( CMD_EDIT_SHAPE_COLOR );
+            break;
+         case '4':
+            Menu ( CMD_EDIT_SHAPELEFT_COLOR );
             break;
 
          case 'q': case 'Q':

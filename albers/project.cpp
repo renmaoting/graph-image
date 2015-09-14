@@ -27,11 +27,14 @@ Project::Project()
 	shapeColor.h = 11.0;
 	shapeColor.s = 1.0;
 	shapeColor.v = 0.72;
-	
-	shape.posX = 0.5;
+	shapeLeftColor.h = 11.0;
+	shapeLeftColor.s = 1.0;
+	shapeLeftColor.v = 0.72;
+
+    shape.posX = 0.5;
 	shape.posY = 0.0;
 	
-	displayMirror = true;
+	displayMirror = false;
 }
 
 Project::~Project()
@@ -108,6 +111,8 @@ void Project::SaveColors ( FILE *fp )
 	fprintf ( fp, "%d %d %d\n", r, g, b );
 	HSVtoRGB(shapeColor.h, shapeColor.s, shapeColor.v, r, g, b);
 	fprintf ( fp, "%d %d %d\n", r, g, b );
+	HSVtoRGB(shapeLeftColor.h, shapeLeftColor.s, shapeLeftColor.v, r, g, b);
+	fprintf ( fp, "%d %d %d\n", r, g, b );
 }
 
 void Project::LoadColors ( FILE *fp )
@@ -119,6 +124,8 @@ void Project::LoadColors ( FILE *fp )
 	RGBtoHSV(r, g, b, rightColor.h, rightColor.s, rightColor.v);
 	fscanf ( fp, "%d %d %d", &r, &g, &b );
 	RGBtoHSV(r, g, b, shapeColor.h, shapeColor.s, shapeColor.v);
+	fscanf ( fp, "%d %d %d", &r, &g, &b );
+	RGBtoHSV(r, g, b, shapeLeftColor.h, shapeLeftColor.s, shapeLeftColor.v);
 }
 
 void Project::SaveShape  ( FILE *fp )
