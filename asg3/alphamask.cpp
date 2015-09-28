@@ -24,7 +24,7 @@ Write::ImageData*   displayImageData = NULL;//display this structure
 Write::ImageData*   imageBuffer;
 int                 windowWidth;
 int                 windowHeight;
-float               k = 1.0;
+float               k = 1.5;
 bool pv = false, ss = false; 
 
 void display(void)
@@ -34,12 +34,10 @@ void display(void)
     //GL_LUMINANCE
     if(displayImageData->channels == 3)
     {
-        std::cout <<"channels: " << displayImageData->channels << std::endl;
         glDrawPixels(displayImageData->width, displayImageData->height, GL_RGB,GL_UNSIGNED_BYTE, displayImageData->pixels);
     }
     else if(displayImageData->channels == 4)
     {
-        std::cout <<"channels: " << displayImageData->channels << std::endl;
         glDrawPixels(displayImageData->width, displayImageData->height, GL_RGBA,GL_UNSIGNED_BYTE, displayImageData->pixels);
     }
     glFlush();
@@ -65,19 +63,27 @@ void specialKeyHandle(int key, int x, int y)
     //this function will response to left arrow and right arrow and play image one by one
     switch(key){
         case GLUT_KEY_UP:
-            if(k < 5)
+            if(pv == false) break;
+            if(k < 2)
                 k += 0.1;
             std::cout << "k = " << k << std::endl;
-            displayImageData = manipulation->verticalFlip(imageBuffer);
-            manipulation->pvMsking(displayImageData, k);
+            imageData = manipulation->pvMsking(imageBuffer, k);// imageData;
+            write->writeData(writeFilename, imageData);
+            imageData = read->readImage(writeFilename);
+            displayImageData = manipulation->verticalFlip(imageData);
             display();
             break;
         case GLUT_KEY_DOWN:
-            if(k > 0.5)
+            if(pv == false) break;
+            if(k >= 0.5)
                 k -= 0.1;
             std::cout << "k = " << k << std::endl;
-            manipulation->pvMsking(displayImageData, k);
+            imageData = manipulation->pvMsking(imageBuffer, k);// imageData;
+            write->writeData(writeFilename, imageData);
+            imageData = read->readImage(writeFilename);
+            displayImageData = manipulation->verticalFlip(imageData);
             display();
+            break;
         default:
             break;
     }
@@ -86,76 +92,67 @@ void specialKeyHandle(int key, int x, int y)
 
 void init(int argc, char* argv[])
 {
-    std::cout << "argc = " << argc << std::endl;
-    for(int i =0; i< argc ; i++)
-        std::cout << "argv " << i <<" = " << argv[i] << std::endl; 
-
     //this function will read initial variable and read images into imageBuffer
     if (argc < 3) {
         std::cerr << "Usage: " << argv[0] << " [inputfilename] " << " [outputfilename]" << std::endl;
         exit(1);
     }
     writeFilename = argv[argc - 1];
-    std::cout << "writeFilename = " << writeFilename << std::endl;
     read = new Read();
     write = new Write();
     manipulation = new Manipulation();
    
-    //if(strcmp(argv[1], "-pv") == 0 || strcmp(argv[2], "-pv") == 0) pv = true;
-    //if(strcmp(argv[1], "-ss") == 0 || strcmp(argv[2], "-ss") == 0) ss = true;
-    //std::cout << "pv = " << pv << " ss = " << ss << std::endl;
-    //if(pv == true && ss == true)
-    //{
-    //    if(argc < 5)
-    //    {
-    //        std::cerr << "error usage" << std::endl;
-    //        exit(-1);
-    //    }
-    //    imageBuffer = read->readImage(argv[3]);
-    //    imageData = manipulation->pvMsking(imageBuffer, k);// imageData;
-    //    manipulation->ssMsking(imageData);// imageData;
-    //    write->writeData(writeFilename, imageData);
-    //    imageBuffer = read->readImage(writeFilename);
-    //}
-    
-    //else if(pv == true)
-    //{
-    //    if(argc < 4)
-    //    {
-    //        std::cerr << "error usage" << std::endl;
-    //        exit(-1);
-    //    }
-    //    imageBuffer = read->readImage(argv[2]);
-    //    imageData = manipulation->pvMsking(imageBuffer, k);// imageData;
-    //    write->writeData(writeFilename, imageData);
-    //    imageBuffer = read->readImage(writeFilename);
-    //}
-    //else if(ss == true)
-    //{
-    //     if(argc < 4)
-    //    {
-    //        std::cerr << "error usage" << std::endl;
-    //        exit(-1);
-    //    }
-    //    imageBuffer = read->readImage(argv[2]);
-    //    imageData = manipulation->masking(imageBuffer); 
-    //    manipulation->ssMsking(imageData);// imageData;
-    //    write->writeData(writeFilename, imageData);
-    //    imageBuffer = read->readImage(writeFilename);
-    //}
-    //else
-    //{
-    //   // imageBuffer = read->readImage(argv[1]);
-    //    //imageData = manipulation->masking(imageBuffer);// imageData);
-    //   // write->writeData(writeFilename, imageData);
-    //   // imageBuffer = read->readImage(writeFilename);
-    //}
+    if(strcmp(argv[1], "-pv") == 0 || strcmp(argv[2], "-pv") == 0) pv = true;
+    if(strcmp(argv[1], "-ss") == 0 || strcmp(argv[2], "-ss") == 0) ss = true;
 
-    imageBuffer = read->readImage(argv[1]);
-    imageData = manipulation->masking(imageBuffer);// imageData);
-    write->writeData(writeFilename, imageData);
-    imageBuffer = read->readImage(writeFilename);
-    displayImageData = manipulation->verticalFlip(imageBuffer);
+    if(pv == true && ss == true)
+    {
+        if(argc < 5)
+        {
+            std::cerr << "error usage" << std::endl;
+            exit(-1);
+        }
+        imageBuffer = read->readImage(argv[3]);
+        imageData = manipulation->pvMsking(imageBuffer, k);// imageData;
+        manipulation->ssMsking(imageData);// imageData;
+        write->writeData(writeFilename, imageData);
+        imageData = read->readImage(writeFilename);
+    }
+    
+    else if(pv == true)
+    {
+        if(argc < 4)
+        {
+            std::cerr << "error usage" << std::endl;
+            exit(-1);
+        }
+        imageBuffer = read->readImage(argv[2]);
+        imageData = manipulation->pvMsking(imageBuffer, k);// imageData;
+        write->writeData(writeFilename, imageData);
+        imageData = read->readImage(writeFilename);
+    }
+    else if(ss == true)
+    {
+         if(argc < 4)
+        {
+            std::cerr << "error usage" << std::endl;
+            exit(-1);
+        }
+        imageBuffer = read->readImage(argv[2]);
+        imageData = manipulation->masking(imageBuffer); 
+        manipulation->ssMsking(imageData);// imageData;
+        write->writeData(writeFilename, imageData);
+        imageData = read->readImage(writeFilename);
+    }
+    else
+    {
+        imageBuffer = read->readImage(argv[1]);
+        imageData = manipulation->masking(imageBuffer);// imageData);
+        write->writeData(writeFilename, imageData);
+        imageData = read->readImage(writeFilename);
+    }
+    
+    displayImageData = manipulation->verticalFlip(imageData);
     windowWidth = imageBuffer->width;
     windowHeight = imageBuffer->height;
 }

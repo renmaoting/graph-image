@@ -175,7 +175,7 @@ void Manipulation::HSVtoRGB ( float h, float s, float v, unsigned char &r, unsig
     b = (unsigned char) (blue*255.0 + .5);
 }
 
-Manipulation::ImageData*  Manipulation::pvMsking(ImageData* inputImageData, float& k)
+Manipulation::ImageData*  Manipulation::pvMsking(ImageData* inputImageData, float k)
 {
     if(inputImageData == NULL)
     {
@@ -198,16 +198,16 @@ Manipulation::ImageData*  Manipulation::pvMsking(ImageData* inputImageData, floa
         for(int j =0; j< width; j++)
         {
             int index = i*width*channels + j*channels;
-            imageData->pixels[index] = pixels[index]; 
-            imageData->pixels[index + 1] = pixels[index + 1]; 
-            imageData->pixels[index + 2] = pixels[index + 2]; 
+            imageData->pixels[i*width*4 + j*4] = pixels[index]; 
+            imageData->pixels[i*width*4 + j*4 + 1] = pixels[index + 1]; 
+            imageData->pixels[i*width*4 + j*4 + 2] = pixels[index + 2]; 
             if(pixels[index + 1] > pixels[index + 2] * k )
             {
-                imageData->pixels[index + 3] = 0;
+                imageData->pixels[i*width*4 + j*4 + 3] = 0;
             }
             else
             {
-                imageData->pixels[index +3] = 255;
+                imageData->pixels[i*width*4 + j*4 +3] = 255;
             }
         }
     }    

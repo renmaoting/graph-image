@@ -19,7 +19,7 @@ public:
     ImageData* masking(ImageData* inputImageData);
     void RGBtoHSV ( unsigned char r, unsigned char g, unsigned char b, float &h, float &s, float &v );
     void HSVtoRGB ( float h, float s, float v, unsigned char &r, unsigned char &g, unsigned char &b );
-    ImageData* pvMsking(ImageData* inputImageData, float& k);
+    ImageData* pvMsking(ImageData* inputImageData, float k);
     void ssMsking(ImageData* inputImageData);
     ImageData* compositeByMasking(ImageData* AImage, ImageData* BImage);
 };
