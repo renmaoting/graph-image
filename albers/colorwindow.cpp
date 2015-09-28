@@ -4,6 +4,7 @@
 #include "colorwindow.h"
 #include "math.h"
 
+
 #define min(x1,x2)  ((x1)<(x2)?(x1):(x2))
 #define max(x1,x2)  ((x1)>(x2)?(x1):(x2))
 
