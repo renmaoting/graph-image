@@ -236,7 +236,7 @@ void Manipulation::ssMsking(ImageData* inputImageData)
     }
 }
 
-Manipulation::ImageData* Manipulation::compositeByMasking(ImageData* AImage, ImageData* BImage)
+Manipulation::ImageData* Manipulation::composite(ImageData* AImage, ImageData* BImage)
 {
     if(AImage == NULL || BImage == NULL)
     {
@@ -244,28 +244,39 @@ Manipulation::ImageData* Manipulation::compositeByMasking(ImageData* AImage, Ima
         exit(-1);
     }
 
-    ImageData* aImage = NULL;
-    aImage = masking(AImage);
-    
     ImageData* imageData = new ImageData();
     int width = BImage->width;
     int height = BImage->height;
     int channels = BImage->channels;
     imageData->width = width;
     imageData->height = height;
-    imageData->channels = channels;
+    imageData->channels = 4;
     GLubyte* pixels = BImage->pixels;
-    imageData->pixels = new GLubyte[width* height * channels];
+    imageData->pixels = new GLubyte[width* height * 4];
+    
+    int startY = height - AImage->height;
+    int endX = AImage->width;
     for(int i = 0; i < height; i++)
     {
         for(int j =0; j < width; j++)
         {
-            int index = i*width*channels + j*channels; 
-            for(int k =0; j< channels -1; j++)
+            int indexB = i * width * channels + j * channels;
+            int indexI = i*width*4 + j*4;
+            if(i >= startY && j < endX)
             {
-                imageData->pixels[index + k] = aImage->pixels[index + k]* aImage->pixels[index + 3] + BImage->pixels[index + k] *(1 - aImage->pixels[index + 3]);
+                int indexA = (startY -i) * AImage->width * AImage->channels + j* AImage->width;
+                int a = AImage->pixels[indexA + 3]/255; 
+                imageData->pixels[indexI]    = AImage->pixels[indexA] * a +   pixels[indexB] * (1-a);
+                imageData->pixels[indexI +1] = AImage->pixels[indexA] * a +   pixels[indexB] * (1-a);
+                imageData->pixels[indexI +2] = AImage->pixels[indexA] * a +   pixels[indexB] * (1-a);
             }
-            imageData->pixels[index + 3] = 255;
+            else
+            {
+                imageData->pixels[indexI] =   BImage->pixels[indexB];
+                imageData->pixels[indexI +1] = BImage->pixels[indexB + 1];
+                imageData->pixels[indexI +2] = BImage->pixels[indexB + 2];
+            }
+            imageData->pixels[indexI +3] = 255;
         }
     }
 

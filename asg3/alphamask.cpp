@@ -30,8 +30,6 @@ bool pv = false, ss = false;
 void display(void)
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-    //GL_LUMINANCE
     if(displayImageData->channels == 3)
     {
         glDrawPixels(displayImageData->width, displayImageData->height, GL_RGB,GL_UNSIGNED_BYTE, displayImageData->pixels);
@@ -67,10 +65,10 @@ void specialKeyHandle(int key, int x, int y)
             if(k < 2)
                 k += 0.1;
             std::cout << "k = " << k << std::endl;
-            imageData = manipulation->pvMsking(imageBuffer, k);// imageData;
+            imageData = manipulation->pvMsking(imageBuffer, k);
             write->writeData(writeFilename, imageData);
-            imageData = read->readImage(writeFilename);
             displayImageData = manipulation->verticalFlip(imageData);
+            delete imageData;
             display();
             break;
         case GLUT_KEY_DOWN:
@@ -78,10 +76,10 @@ void specialKeyHandle(int key, int x, int y)
             if(k >= 0.5)
                 k -= 0.1;
             std::cout << "k = " << k << std::endl;
-            imageData = manipulation->pvMsking(imageBuffer, k);// imageData;
+            imageData = manipulation->pvMsking(imageBuffer, k);
             write->writeData(writeFilename, imageData);
-            imageData = read->readImage(writeFilename);
             displayImageData = manipulation->verticalFlip(imageData);
+            delete imageData;
             display();
             break;
         default:
@@ -89,7 +87,8 @@ void specialKeyHandle(int key, int x, int y)
     }
 }
 
-
+//30, 120, 60
+ 
 void init(int argc, char* argv[])
 {
     //this function will read initial variable and read images into imageBuffer
@@ -113,10 +112,9 @@ void init(int argc, char* argv[])
             exit(-1);
         }
         imageBuffer = read->readImage(argv[3]);
-        imageData = manipulation->pvMsking(imageBuffer, k);// imageData;
-        manipulation->ssMsking(imageData);// imageData;
+        imageData = manipulation->pvMsking(imageBuffer, k);
+        manipulation->ssMsking(imageData);
         write->writeData(writeFilename, imageData);
-        imageData = read->readImage(writeFilename);
     }
     
     else if(pv == true)
@@ -127,9 +125,8 @@ void init(int argc, char* argv[])
             exit(-1);
         }
         imageBuffer = read->readImage(argv[2]);
-        imageData = manipulation->pvMsking(imageBuffer, k);// imageData;
+        imageData = manipulation->pvMsking(imageBuffer, k);
         write->writeData(writeFilename, imageData);
-        imageData = read->readImage(writeFilename);
     }
     else if(ss == true)
     {
@@ -140,19 +137,18 @@ void init(int argc, char* argv[])
         }
         imageBuffer = read->readImage(argv[2]);
         imageData = manipulation->masking(imageBuffer); 
-        manipulation->ssMsking(imageData);// imageData;
+        manipulation->ssMsking(imageData);
         write->writeData(writeFilename, imageData);
-        imageData = read->readImage(writeFilename);
     }
     else
     {
         imageBuffer = read->readImage(argv[1]);
-        imageData = manipulation->masking(imageBuffer);// imageData);
+        imageData = manipulation->masking(imageBuffer);
         write->writeData(writeFilename, imageData);
-        imageData = read->readImage(writeFilename);
     }
     
     displayImageData = manipulation->verticalFlip(imageData);
+    delete imageData;
     windowWidth = imageBuffer->width;
     windowHeight = imageBuffer->height;
 }
@@ -169,6 +165,9 @@ int main(int argc, char* argv[])
     glutDisplayFunc(display);
     glutSpecialFunc(specialKeyHandle);//response to left arrow and right arrow
     glutKeyboardFunc(handleKey);
+    glBlendEquation(GL_ADD);
+    glEnable(GL_ALPHA_TEST);
+    glAlphaFunc(GL_GREATER, 0);
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);    
 
     glutMainLoop();
