@@ -31,7 +31,7 @@ PROJECT = composite
 
 #list a .o file for each .cpp file that you will compile
 #this makefile will compile each cpp separately before linking
-OBJECTS = alphamask.o read.o write.o manipulation.o 
+OBJECTS = composite.o read.o write.o manipulation.o 
 
 #this target does the linking step  
 all: ${PROJECT}

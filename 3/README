@@ -1,0 +1,36 @@
+/*************************************************************************
+	> File Name: README
+	> Author: Maoting Ren 
+	> Mail: mren@g.clemson.edu
+	> Created Time: Tue 29 Sep 2015 18:05:55 PM EDT
+ ************************************************************************/ 
+
+Thsi project can masking an image and composite two images. In masking, it also support PV and SS.
+
+Masking:
+    Firstly, you can use this command:
+        alphamask aduchow_eyetracker.jpg out.png
+    to gain an image that without green background colour based on 'H' to set alpha. And except use binary mask, it alse allow to set alpha based on 'v' from 0 to 255. And you can see the function in manipulation.cpp in alphamask folder
+        Manipulation::ImageData* Manipulation::masking(ImageData* inputImageData)
+
+    Secondly, you can use this command:
+        aplhamask -pv hand.jpg out.png
+    to set alpha by Petro Vlahos algorithm mode. And you can see the function in manipulation.cpp folder
+    Manipulation::ImageData*  Manipulation::pvMsking(ImageData* inputImageData, float k)
+    Also you can increase k or decrease k by key UP or DOWN.
+   
+    Thirdly, you can use this command:
+        alphamask -ss aduchow_eyetracker.jpg out.png
+    to apply spill suppression. And you can see the function in manipulation.cpp folder
+        void Manipulation::ssMsking(ImageData* inputImageData)
+
+    And in the end, you can also use this command:
+        alphamask -pv -ss aduchow_eyetracker.jpg out.png
+    to set alpha by Petro Vlahos algorithm mode and then apply spill suppression.
+
+Composite:
+    You can use this command to composite two images:
+        composite aduchow_eyetracker.png cow.jpg 
+        or composite aduchow_eyetracker.png bigcat.jpg out.png
+    And you can see this function in manipulation.cpp in composite folder
+        Manipulation::ImageData* Manipulation::composite(ImageData* AImage, ImageData* BImage)

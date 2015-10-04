@@ -48,7 +48,10 @@ Manipulation::ImageData* Manipulation::masking(ImageData* inputImageData)
     {
         std::cout << "Manipulation::msking() parameter inputImageData should not be null" << std::endl;
         exit(-1);
-    } 
+    }
+
+    float T = 0.30;
+    float C = 0.1; 
     ImageData* imageData = new ImageData();
     int width = inputImageData->width;
     int height = inputImageData->height;
@@ -67,16 +70,25 @@ Manipulation::ImageData* Manipulation::masking(ImageData* inputImageData)
             imageData->pixels[i*width* 4 +j* 4 + 1] = pixels[i*width*channels + j*channels + 1]; 
             imageData->pixels[i*width* 4 +j* 4 + 2] = pixels[i*width*channels + j*channels + 2]; 
             RGBtoHSV(pixels[i*width*channels + j*channels], pixels[i*width*channels +j*channels +1], pixels[i*width*channels +j*channels +2], h, s, v);
-            if(h > 70 && h < 160)
+          
+
+            if(h > 70 && h < 150)
             {
-                imageData->pixels[i*width* 4 +j* 4 + 3] = 0; 
+                    imageData->pixels[i*width* 4 +j* 4 + 3] = 0; 
             }
             else
             {
-                imageData->pixels[i*width* 4 +j* 4 + 3] = 255; 
+                if(v > (T - C) && v < (T + C))
+                {
+                    imageData->pixels[i*width* 4 +j* 4 + 3] = (v - (T - C))*1.0/(2*C) * 255; 
+                }
+                else
+                    imageData->pixels[i*width* 4 +j* 4 + 3] = 255; 
             }
         }
     } 
+
+    
     return imageData; 
 }
 
@@ -235,55 +247,6 @@ void Manipulation::ssMsking(ImageData* inputImageData)
         }
     }
 }
-
-Manipulation::ImageData* Manipulation::composite(ImageData* AImage, ImageData* BImage)
-{
-    if(AImage == NULL || BImage == NULL)
-    {
-        std::cout << "Manipulation::compositeByMasking() parameter inputImageData should not be null" << std::endl;
-        exit(-1);
-    }
-
-    ImageData* imageData = new ImageData();
-    int width = BImage->width;
-    int height = BImage->height;
-    int channels = BImage->channels;
-    imageData->width = width;
-    imageData->height = height;
-    imageData->channels = 4;
-    GLubyte* pixels = BImage->pixels;
-    imageData->pixels = new GLubyte[width* height * 4];
-    
-    int startY = height - AImage->height;
-    int startX = (width - AImage->width)/2 -150;
-    std::cout << "startY " << startY << std::endl; 
-    for(int i = 0; i < height; i++)
-    {
-        for(int j =0; j < width; j++)
-        {
-            int indexB = i * width * channels + j * channels;
-            int indexI = i*width*4 + j*4;
-            if(i >= startY && (j < (AImage->width + startX) && j >= startX ))
-            {
-                int indexA = (i - startY) * AImage->width * AImage->channels + (j - startX)* AImage->channels;
-                int a = (AImage->pixels[indexA + 3] != 0)?1:0; 
-                imageData->pixels[indexI]       = (a==1)?AImage->pixels[indexA]:pixels[indexB];
-                imageData->pixels[indexI +1]    = (a==1)?AImage->pixels[indexA +1]:pixels[indexB +1];
-                imageData->pixels[indexI +2]    = (a==1)?AImage->pixels[indexA +2]:pixels[indexB +2];
-            }
-            else
-            {
-                imageData->pixels[indexI] =   pixels[indexB];
-                imageData->pixels[indexI +1] = pixels[indexB + 1];
-                imageData->pixels[indexI +2] = pixels[indexB + 2];
-            }
-            imageData->pixels[indexI +3] = 255;
-        }
-    }
-
-    return imageData;
-}
-
 
 
 

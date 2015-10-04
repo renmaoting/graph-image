@@ -24,7 +24,7 @@ Write::ImageData*   displayImageData = NULL;//display this structure
 Write::ImageData*   imageBuffer;
 int                 windowWidth;
 int                 windowHeight;
-float               k = 1.5;
+float               k = 2.0;
 bool pv = false, ss = false; 
 
 void display(void)

@@ -42,7 +42,6 @@ Read:: ImageData* Read::readImage(char* filename)
        delete in;
        exit(-1);
     }
-    std::cout << "read succed!" << std::endl;
     delete in;
     return imageData;
 }
