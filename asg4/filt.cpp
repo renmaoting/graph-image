@@ -92,7 +92,7 @@ void init(int argc, char* argv[])
         strcat(filtFilename, argv[1]);
         strcat(readFilename, argv[2]);
         
-        imgIO->readFilt(vecFilt, filtFilename);
+        imgIO->readFilter(vecFilt, filtFilename);
     }
     imageBuffer = imgIO->readImage(readFilename);
     displayImageData = manipulation->verticalFlip(imageBuffer);

@@ -29,7 +29,7 @@ class ImageIO
 public:
     ImageData* readImage(char* filename);//read the image information into a structure
     bool writeData(char* filename, ImageData* originalImageData);
-    bool readFilt(std::vector<std::vector<double> >& vecFilt, char* filename);
+    bool readFilter(std::vector<std::vector<double> >& vecFilt, char* filename);
 };
 
 #endif

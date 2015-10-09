@@ -89,7 +89,7 @@ bool ImageIO::writeData(char* filename, ImageData* originalImageData)
     return true;
 }
 
-bool ImageIO::readFilt(std::vector<std::vector<double> >& vecFilt,char* filename)
+bool ImageIO::readFilter(std::vector<std::vector<double> >& vecFilt,char* filename)
 {
     if(filename == NULL)
     {

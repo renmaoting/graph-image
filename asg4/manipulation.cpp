@@ -65,14 +65,16 @@ ImageData* Manipulation::filt(ImageData* inputImage, const std::vector<std::vect
         {
             for(int k =0; k < channels; k++)
             {
-                float cnt =0, totalWeight = 0;
+                double cnt =0, totalPositivetWeight = 0, totalNegativeWeight = 0;
                 int N = vecFilt.size();
                 for(int x = 0; x < N; x++)
                 {
                     for(int y = 0; y < N; y++)
                     {
                         if(vecFilt[x][y] > 0)
-                            totalWeight += vecFilt[x][y];
+                            totalPositivetWeight += vecFilt[x][y];
+                        if(vecFilt[x][y] < 0)
+                            totalNegativeWeight += vecFilt[x][y];
                         int m = i + x - N/2;
                         int n = j + y - N/2;
                         if(m < 0 || n < 0 || m >= height || n >= width)
@@ -80,16 +82,15 @@ ImageData* Manipulation::filt(ImageData* inputImage, const std::vector<std::vect
                         cnt += vecFilt[x][y] * pixels[(i + x - N/2)* width * channels + (j + y - N/2)*channels + k];
                     }
                 }
-                int value = cnt/totalWeight;
+
+                double factor = totalPositivetWeight>(-totalNegativeWeight)?totalPositivetWeight:(-totalNegativeWeight);
+                if(factor == 0)
+                    factor = 1;// this code will guarantee factor not be 0
+                int value = cnt/factor;
 
                 if(value <= 0) value = 0;
                 if(value > 255) value = 255;
-                if(totalWeight <= 0)
-                    imageData->pixels[i*width*channels + j*channels +k] = value;
-                else
-                {
-                    imageData->pixels[i*width*channels + j*channels +k] = value;
-                }
+                imageData->pixels[i*width*channels + j*channels +k] = value;
             }
         }
     }
