@@ -43,9 +43,9 @@ ImageData* Manipulation::verticalFlip(ImageData* inputImageData)
 
 ImageData* Manipulation::filt(ImageData* inputImage, const std::vector<std::vector<double> >& vecFilt)
 {
-    if(inputImage == NULL)
+    if(inputImage == NULL || vecFilt.size() == 0)
     {
-        std::cout << "Manipulation::filt inputImage shouldn't be NULL" << std::endl;
+        std::cout << "Manipulation::filt inputImage shouldn't be NULL, or vector should not be NULL!" << std::endl;
         exit(0);
     }    
     ImageData* imageData;
@@ -71,15 +71,15 @@ ImageData* Manipulation::filt(ImageData* inputImage, const std::vector<std::vect
                 {
                     for(int y = 0; y < N; y++)
                     {
-                        if(vecFilt[x][y] > 0)
-                            totalPositivetWeight += vecFilt[x][y];
-                        if(vecFilt[x][y] < 0)
-                            totalNegativeWeight += vecFilt[x][y];
+                        if(vecFilt[N-x-1][N-y-1] > 0)
+                            totalPositivetWeight += vecFilt[N-x-1][N-y-1];
+                        if(vecFilt[N-x-1][N-y-1] < 0)
+                            totalNegativeWeight += vecFilt[N-x-1][N-y-1];
                         int m = i + x - N/2;
                         int n = j + y - N/2;
                         if(m < 0 || n < 0 || m >= height || n >= width)
                             continue;
-                        cnt += vecFilt[x][y] * pixels[(i + x - N/2)* width * channels + (j + y - N/2)*channels + k];
+                        cnt += vecFilt[N-x-1][N-y-1] * pixels[(i + x - N/2)* width * channels + (j + y - N/2)*channels + k];
                     }
                 }
 
@@ -108,8 +108,8 @@ bool Manipulation::gabor(std::vector<std::vector<double> >& vecFilt, int theta, 
         std::vector<double> vec;
         for(int j =0; j< 2*sigma + 1; j++)
         {
-            double x = (j - sigma)*cos(theta) + (i - sigma)* sin(theta);
-            double y =-(j - sigma)*sin(theta) + (i - sigma)* cos(theta);
+            double x = (j - sigma)*cos(theta*3.14/180) + (i - sigma)* sin(theta*3.14/180);
+            double y =-(j - sigma)*sin(theta*3.14/180) + (i - sigma)* cos(theta*3.14/180);
             value = exp(-(x*x + y*y) / (2 * sigma*sigma)) * cos(2*3.14 * x / period); 
             vec.push_back(value);
         }

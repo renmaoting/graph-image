@@ -61,7 +61,7 @@ The following are experimentation
         ./filt -g 0 4 8 rays.png 0-4-8-rays.png
         ./filt -g 45 4 4 rays.png 45-4-4-rays.png
         ./filt -g 45 4 8 rays.png 45-4-8-rays.png
-    Different parameter makes the results look very different, when the sigma be 0, period be 4, you can see all direction lines, but when the sigma be 45, it only remain diagnal lines. You can see details by compare 0-4-4-rays.png, 0-4-8-rays.png, 45-4-4-rays.png, 45-4-8-rays.png.
+    Different parameter makes the results look very different, when the theta be 0, you can see most horizontal colours have been filted, when the theta be 45, the lines of this direction become fade. And you can see the result of when period be 4, has a more obvious effect than when period be 8. You can see details by compare 0-4-4-rays.png, 0-4-8-rays.png, 45-4-4-rays.png, 45-4-8-rays.png.
 
 
 
