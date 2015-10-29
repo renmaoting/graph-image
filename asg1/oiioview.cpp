@@ -246,7 +246,11 @@ int main(int argc, char* argv[])
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     gluOrtho2D(0,windowWidth, 0, windowHeight);
-    glClearColor(1,1,1,1);    
+    glEnable(GL_ALPHA_TEST);
+    glAlphaFunc(GL_GREATER, 0);
+    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);    
+
+   glClearColor(1,1,1,1);    
 
     glutMainLoop();
     return 0;

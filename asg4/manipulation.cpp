@@ -71,24 +71,26 @@ ImageData* Manipulation::filt(ImageData* inputImage, const std::vector<std::vect
                 {
                     for(int y = 0; y < N; y++)
                     {
-                        if(vecFilt[N-x-1][N-y-1] > 0)
+                        if(vecFilt[N-x-1][N-y-1] > 0)//get positive magnitude
                             totalPositivetWeight += vecFilt[N-x-1][N-y-1];
-                        if(vecFilt[N-x-1][N-y-1] < 0)
+                        if(vecFilt[N-x-1][N-y-1] < 0)//get negative magnitude
                             totalNegativeWeight += vecFilt[N-x-1][N-y-1];
                         int m = i + x - N/2;
                         int n = j + y - N/2;
-                        if(m < 0 || n < 0 || m >= height || n >= width)
+                        if(m < 0 || n < 0 || m >= height || n >= width)// in the boundary, I just set the outside pixel as 0
                             continue;
+                        // in this place, I use reflection
                         cnt += vecFilt[N-x-1][N-y-1] * pixels[(i + x - N/2)* width * channels + (j + y - N/2)*channels + k];
                     }
                 }
 
+                // get the max of positive magnitude and negative magnitude as factor
                 double factor = totalPositivetWeight>(-totalNegativeWeight)?totalPositivetWeight:(-totalNegativeWeight);
                 if(factor == 0)
                     factor = 1;// this code will guarantee factor not be 0
                 int value = cnt/factor;
 
-                if(value <= 0) value = 0;
+                if(value <= 0) value = 0;// normalization
                 if(value > 255) value = 255;
                 imageData->pixels[i*width*channels + j*channels +k] = value;
             }

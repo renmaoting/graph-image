@@ -9,7 +9,7 @@ In this assignment, I adjust the framework of my code, and make it more brief to
 
 By run this code, you can read or generate a filter and read an image, then it will display the image. When you press the 'c' key, it can apply the filter to the image and display it, repeated press the 'c' key will repeatedly apply the convolution. And if you press 'r' key, it will display the orignal image. Also, if you have provided an output filename, when you press 'w' key, it will save the displaying image to that file. 
 
-When rescaling the kernel values, I choose the max of sum of positive weights and sum of negative weights as scale factor, this can guarantee the sum of weights between [-1,1]. As the pixel value maybe over 255 or be negative, I choose to set the value be 255 when it over 255, and set 0 if it is negative. Also, when deal with the boundary problem, I choose to set the outside pixel value be 0.
+When add the sums, I will implement reflection first. And when rescaling the kernel values, I choose the max of sum of positive weights and sum of negative weights as scale factor, this can guarantee the sum of weights between [-1,1]. As the pixel value maybe over 255 or be negative, I choose to set the value be 255 when it over 255, and set 0 if it is negative. Also, when deal with the boundary problem, I choose to set the outside pixel value be 0.
 
 This assignment has three important functions, the first function is:
     bool ImageIO::readFilter(std::vector<std::vector<double> >& vecFilt,char* filename)

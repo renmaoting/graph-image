@@ -1,0 +1,77 @@
+/*************************************************************************
+	> File Name: README
+	> Author: Maoting Ren 
+	> Mail: mren@g.clemson.edu
+	> Created Time: Wed 07 Oct 2015 01:05:55 PM EDT
+ ************************************************************************/
+
+In this assignment, I adjust the framework of my code, and make it more brief to understand. It consists of two classes, they are ImageIO and Manipulation. The first class is responsable for read, write image and read filter. And the second class is responsable for operate images, such as flip image and apply the filters.
+
+By run this code, you can read or generate a filter and read an image, then it will display the image. When you press the 'c' key, it can apply the filter to the image and display it, repeated press the 'c' key will repeatedly apply the convolution. And if you press 'r' key, it will display the orignal image. Also, if you have provided an output filename, when you press 'w' key, it will save the displaying image to that file. 
+
+When add the sums, I will implement reflection first. And when rescaling the kernel values, I choose the max of sum of positive weights and sum of negative weights as scale factor, this can guarantee the sum of weights between [-1,1]. As the pixel value maybe over 255 or be negative, I choose to set the value be 255 when it over 255, and set 0 if it is negative. Also, when deal with the boundary problem, I choose to set the outside pixel value be 0.
+
+This assignment has three important functions, the first function is:
+    bool ImageIO::readFilter(std::vector<std::vector<double> >& vecFilt,char* filename)
+This function will accept two parameters, and will read the filter by filename and save it into the vector. You can see details in imageIO.h and imageIO.cpp.
+
+The second function is:
+    ImageData* Manipulation::filt(ImageData* inputImage, const std::vector<std::vector<double> >& vecFilt)
+This function will apply a filter to the input image, and return a new processed image. In this function, you can see the most important code that which way I use to deal the "normalization" and the "boundary mechanism". 
+
+The "ImageData" is a struct which store the information of an image, it will automaticly free the memory of pixels when the object disappear. You can see its declearation in imageIO.h:
+        typedef struct Data{
+            int width;
+            int height;
+            int channels;
+            GLubyte* pixels;
+            Data(){ pixels = NULL;}
+            ~Data()
+            {
+                if(pixels != NULL)
+                delete[] pixels; 
+            }
+        }ImageData;
+
+The third function is: 
+    bool Manipulation::gabor(std::vector<std::vector<double> >& vecFilt, int theta, double sigma, double period)
+This function can generate a filter by the input parameters, then apply it and return a new processed image. You can see details in manipulation.h and manipulation.cpp.
+
+
+The following are experimentation
+1. This experimentation will apply three filters to squares.png, you can use the following commands to seperately apply three filters to the image:
+        ./filt bell9.filt squares.png bell9-squares.png
+        ./filt box9.filt squares.png box9-squares.png
+        ./filt tent9.filt squares.png tent9-squares.png
+    Compare the result of three image, the result of box9.filt be more blur. When you magnify them, you also will find some difference, the edge of bell9.filt and tent9.filt more smooth. You can see details by compare bell9-squares.png, box9-squares.png and tent9-squares.png.
+
+2. This experimentation will apply three filters to checkers.png, also you can user the following commands to run it:
+        ./filt hp.filt checkers.png hp-checkers.png
+        ./filt sobol-horiz.filt checkers.png sobol-horiz-checkers.png
+        ./filt sobol-vert.filt checkers.png sobol-vert-checkers.png
+    The rusult of these filters are very different. The result of hp.filt are very dark, and it erases most of colours. After apply the sobol-horiz.filt, we can see it remains vertical lines, and the result of sobol-vert.filt only remain horizontal lines. You can see details by compare hp-checkers.png, sobol-horiz-checkers.png and sobol-vert-checkers.png.
+
+3. This experimentation apply myself filters. You can run it by following commands:
+        ./filt new1.filt brushes.png new1-brushes.png
+        ./filt new2.filt brushes.png new2-brushes.png 
+    By compare the results, you can find the fisrt one just become blur, and the second one become blur and dark. You can see details by see new1-brushes.png and new2-brushes.png. And my filter is new1.filter and new2.filter.
+
+4. This experimentation apply gabor filter. You can provide different parameters to get different result, use following commands to run it:
+        ./filt -g 0 4 4 rays.png 0-4-4-rays.png
+        ./filt -g 0 4 8 rays.png 0-4-8-rays.png
+        ./filt -g 45 4 4 rays.png 45-4-4-rays.png
+        ./filt -g 45 4 8 rays.png 45-4-8-rays.png
+    Different parameter makes the results look very different, when the theta be 0, you can see most horizontal colours have been filted, when the theta be 45, the lines of this direction become fade. And you can see the result of when period be 4, has a more obvious effect than when period be 8. You can see details by compare 0-4-4-rays.png, 0-4-8-rays.png, 45-4-4-rays.png, 45-4-8-rays.png.
+
+
+
+
+
+
+
+
+
+
+
+
+
