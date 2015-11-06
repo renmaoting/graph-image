@@ -27,9 +27,11 @@ ImageData*          toneMappedImage;
 int                 windowWidth;
 int                 windowHeight;
 float               Gamma = 0.5;
-int                 C = 10;
+int                 C = 70;
 int                 K = 21;
+float               A = 0.78;
 bool                flagG = false; // if the command contain '-g'
+bool                flagA = false; // if the command contain '-g'
 bool                flagB = false; // if the command contain '-b'
 bool                flagC = false; // if the command contain '-c'
 int                 flagS = 1; // indicate original image or tone mapped image
@@ -52,9 +54,9 @@ void handleKey(unsigned char key, int x, int y)
     switch(key){
         case 's':
         case 'S':
-            if(flagG || flagC)
+            if(flagG || flagC || flagB || flagA)
             {
-                flagS = (flagS + 1)%2;
+                flagS = (flagS + 1)%2;// flagS = 0 mean it will display original image
                 if(flagS == 0)
                     displayImageData = manipulation->verticalFlip(imageBuffer);
                 else
@@ -100,6 +102,16 @@ void specialKeyHandle(int key, int x, int y)
                 display();
                 break;
             }
+            if(flagA)
+            {
+                A += 0.05;
+                std::cout << "A = " << A << std::endl;
+                imageData = manipulation->globalOpt(imageBuffer,A);
+                toneMappedImage = manipulation->verticalFlip(imageData);
+                displayImageData = toneMappedImage;
+                display();
+                break;
+            }
             if(flagB && K < 50)
             {
                 K += 2;
@@ -131,6 +143,17 @@ void specialKeyHandle(int key, int x, int y)
                 display();
                 break;
             }
+            if(flagA)
+            {
+                A -= 0.05;
+                std::cout << "A = " << A << std::endl;
+                imageData = manipulation->globalOpt(imageBuffer,A);
+                toneMappedImage = manipulation->verticalFlip(imageData);
+                displayImageData = toneMappedImage;
+                display();
+                break;
+            }
+
             if(flagB && K > 3)
             {
                 K -= 2;
@@ -188,6 +211,17 @@ void init(int argc, char* argv[])
         imageBuffer = imgIO->readImage(readFilename);
         toneMappedImage = manipulation->toneMapping(imageBuffer,1 ,C, K);
     }
+    else if(strcmp(argv[1], "-a") == 0)
+    {   
+        flagA = true;
+        // if there is a flag -o
+        readFilename = argv[2];
+        if(argc >= 4)
+            writeFilename = argv[3];
+        imageBuffer = imgIO->readImage(readFilename);
+        toneMappedImage = manipulation->globalOpt(imageBuffer, A);
+    }
+
     else
     {
         readFilename = argv[1];

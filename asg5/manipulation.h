@@ -20,5 +20,6 @@ public:
     ImageData* toneMapping(ImageData* inputImage,int flag, int c, int kSize);
     ImageData* biFilt(ImageData* inputImage, int kSize);
     ImageData* BF(ImageData* inputImage, const std::vector<std::vector<float> >& vecFilt);
+    ImageData* globalOpt(ImageData* inputImage , float a);
 };
 #endif

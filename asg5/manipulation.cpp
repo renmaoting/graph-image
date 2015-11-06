@@ -161,7 +161,7 @@ ImageData* Manipulation::toneMapping(ImageData* inputImage, int flag, int c, int
     float minB= 999999,  maxB = -999999;
     for(int i =0; i < imageB->height; i++)
     {
-        for(int j =0; j < imageB->width; j++)
+        or(int j =0; j < imageB->width; j++)
         {
             // get the max(B) and min(B)
            if(imageB->pixels[i* imageB->width + j] > maxB) 
@@ -219,6 +219,7 @@ ImageData* Manipulation::toneMapping(ImageData* inputImage, int flag, int c, int
         }
     }
 
+    std::cout << "succed!" << std::endl;
     return imageCd;
 }
 
@@ -260,8 +261,16 @@ ImageData* Manipulation::biFilt(ImageData* inputImage, int kSize)
                 {
                     for(int y = 0; y < N; y++)
                     {
-                        //float w = exp(-pow(Lw[i][j] - Lw[i+x -N/2][j + y - N/2], 2.0));
-                        float d =inputImage->pixels[(i + x - N/2)* inputImage->width *inputImage->channels + (j + y - N/2)*inputImage->channels + k]
+                        // deal with the boundary pixels
+                        int m =abs( i + x - N/2 );
+                        int n =abs(j + y - N/2);
+                        if(m >= imageData->height )
+                            m = 2*imageData->height - m;
+                        if(n >= imageData->width )
+                            n = 2*imageData->width - n;
+
+                        // get d 
+                        float d =inputImage->pixels[m* inputImage->width *inputImage->channels + n*inputImage->channels + k]
                             -inputImage->pixels[i* inputImage->width * inputImage->channels + j*inputImage->channels + k]; 
                         
                         // w = exp(-clamp(d*d); 
@@ -269,15 +278,10 @@ ImageData* Manipulation::biFilt(ImageData* inputImage, int kSize)
                         if(t >1) t = 1;
                         float w = exp(-t);
                         factor +=  w* vecFilt[N-x-1][N-y-1];
-                        int m = i + x - N/2;
-                        int n = j + y - N/2;
-                        if(m < 0 || n < 0 || m >= imageData->height || n >= imageData->width)// in the boundary, I just set the outside pixel as 0
-                            continue;
 
-                        // get the w by w = exp(-clamp(d*d);
                         // in this place, I use reflection
-                        cnt += w* vecFilt[N-x-1][N-y-1] * inputImage->pixels[(i + x - N/2)* inputImage->width *
-                                inputImage->channels + (j + y - N/2)*inputImage->channels + k];
+                        cnt += w* vecFilt[N-x-1][N-y-1] * inputImage->pixels[m* inputImage->width *
+                                inputImage->channels + n*inputImage->channels + k];
                     }
                 }
 
@@ -293,7 +297,76 @@ ImageData* Manipulation::biFilt(ImageData* inputImage, int kSize)
 }
 
 
+ImageData* Manipulation::globalOpt(ImageData* inputImage , float a)
+{
+    if(inputImage == NULL )
+    {
+        std::cout << "Manipulation::globalOpt inputImage shouldn't be NULL!" << std::endl;
+        exit(0);
+    }    
+    
+    std::vector<std::vector<float> > LwVec;
+    std::vector<std::vector<float> > LmVec;
+    std::vector<std::vector<float> > LdVec;
 
+    std::vector<float> tem;
+    tem.resize(inputImage->width);
+    for(int i =0; i< inputImage->height ; i++)
+    {
+        LwVec.push_back(tem); 
+        LmVec.push_back(tem); 
+        LdVec.push_back(tem); 
+    }
+
+    float Lwhite = 0;
+    float sum = 0;
+    float LwAverage = 0;
+
+    for(int i =0; i < inputImage->height; i++)
+    {
+        for(int j =0; j < inputImage->width; j++)
+        {
+            int index = i*inputImage->width * inputImage->channels + j * inputImage->channels;
+            // Lw = 1/61.0 * (20.0R + 40.0G + B)
+            float Lw = 1/61.0 *(20.0 * inputImage->pixels[index] + 40.0* inputImage->pixels[index+ 1] + inputImage->pixels[index +2]);
+            if(Lw > Lwhite) Lwhite = Lw;
+            LwVec[i][j] = Lw;// the new image's pixel value i log(Lw)
+            sum += log(0.0001 + Lw);
+        }
+    }
+
+    std::cout << " Lwhite = "<< Lwhite << std::endl;
+    LwAverage = exp(sum / (inputImage->width * inputImage->height));
+    for(int i =0; i < inputImage->height; i++)
+        for(int j =0; j < inputImage->width; j++)
+            LmVec[i][j] = a/LwAverage  * LwVec[i][j];
+ 
+    for(int i =0; i < inputImage->height; i++)
+        for(int j =0; j < inputImage->width; j++)
+            LdVec[i][j] = LmVec[i][j] * (1 + LmVec[i][j]/(Lwhite * Lwhite))/( 1 + LmVec[i][j]);    
+
+    // create the result image Cd
+    ImageData* imageCd = new ImageData();
+    *imageCd = *inputImage;
+
+    for(int i =0; i< imageCd->height; i++)
+    {
+        for(int j =0; j< imageCd->width; j++)
+        {
+            // get the Ld/Lw
+            float factor = LdVec[i][j]  / LwVec[i][j];
+            for(int k =0; k < imageCd->channels; k++)
+            {
+                // Cd  = (Ld/Lw) * C
+                imageCd->pixels[i*imageCd->width * imageCd->channels +j*imageCd->channels+ k] =
+                    factor* inputImage->pixels[i*inputImage->width * inputImage->channels + j* inputImage->channels + k];
+            }
+        }
+    }
+
+    std::cout << " global operator succed! " << std::endl;
+    return imageCd;
+}
 
 
 
