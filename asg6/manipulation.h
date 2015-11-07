@@ -15,11 +15,5 @@ class Manipulation
 {
 public:
     ImageData* verticalFlip(ImageData* inputImage);
-    ImageData* filt(ImageData* inputImage, const std::vector<std::vector<float> >& vecFilt);
-    ImageData* simpleTM(ImageData* inputImage, float gamma);
-    ImageData* toneMapping(ImageData* inputImage,int flag, int c, int kSize);
-    ImageData* biFilt(ImageData* inputImage, int kSize);
-    ImageData* BF(ImageData* inputImage, const std::vector<std::vector<float> >& vecFilt);
-    ImageData* globalOpt(ImageData* inputImage , float a);
 };
 #endif

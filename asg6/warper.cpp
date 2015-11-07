@@ -11,7 +11,7 @@
 #include "imageIO.h"
 #include <string.h>
 #include <cmath>
-#include "Matrix.h"
+#include "vecmat/Matrix.h"
 
 using namespace std;
 
@@ -123,8 +123,8 @@ void process_input(Matrix3x3 &M){
 
     for(done = false; !done;) {
         /* prompt and accept input, converting text to lower case */
-        printf("> ");
-        scanf("%s", command);
+        cout  << "> ";
+        cin >> command;
         lowercase(command);
 
         /* parse the input command, and read parameters as needed */
@@ -132,15 +132,15 @@ void process_input(Matrix3x3 &M){
             done = true;
         }
         else if(strlen(command) != 1) {
-            printf("invalid command, enter r, s, t, h, d\n");
+            cout << "invalid command, enter r, s, t, h, d\n";
         }
         else {
             switch(command[0]) {
                 case 'r':		/* Rotation, accept angle in degrees */
-                    if(scanf("%f", &theta) == 1)
+                    if(cin >> theta)
                         Rotate(M, theta);
                     else
-                        fprintf(stderr, "invalid rotation angle\n");
+                        cout << "invalid rotation angle\n";
                     break;
                 case 's':		/* Scale, accept scale factors */
                     break;
@@ -152,7 +152,7 @@ void process_input(Matrix3x3 &M){
                     done = true;
                     break;
                 default:
-                    printf("invalid command, enter r, s, t, h, d\n");
+                    cout << "invalid command, enter r, s, t, h, d\n";
                     break;
             }
         }
