@@ -27,17 +27,45 @@ ImageData*          imageBuffer;
 ImageData*          toneMappedImage;
 int                 windowWidth;
 int                 windowHeight;
-float               Gamma = 0.5;
-int                 C = 70;
-int                 K = 21;
-float               A = 0.78;
-bool                flagG = false; // if the command contain '-g'
-bool                flagA = false; // if the command contain '-g'
-bool                flagB = false; // if the command contain '-b'
-bool                flagC = false; // if the command contain '-c'
-int                 flagS = 1; // indicate original image or tone mapped image
-std::vector<std::vector<double> > vecFilt;
 
+/*
+   Convert the string s to lower case
+*/
+void lowercase(char *s){
+   int i;
+   if(s != NULL) {
+        for(i = 0; s[i] != '\0'; i++) {
+            if(s[i] >= 'A' && s[i] <= 'Z')
+            s[i] += ('a' - 'A');
+        }
+    }
+}
+
+/* 
+   Multiply M by a rotation matrix of angle theta
+*/
+void Rotate(Matrix3x3 &M, float theta){
+   int row, col;
+   Matrix3x3 R(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+   double rad, c, s;
+
+   rad = PI * theta / 180.0;
+   c = cos(rad);
+   s = sin(rad);
+
+   R[0][0] = c;
+   R[0][1] = -s;
+   R[1][0] = s;
+   R[1][1] = c;
+
+   Matrix3x3 Prod = R * M;
+
+   for(row = 0; row < 3; row++) {
+        for(col = 0; col < 3; col++) {
+            M[row][col] = Prod[row][col];
+        }
+    }
+}
 
 void display(void)
 {
@@ -55,15 +83,6 @@ void handleKey(unsigned char key, int x, int y)
     switch(key){
         case 's':
         case 'S':
-            if(flagG || flagC || flagB || flagA)
-            {
-                flagS = (flagS + 1)%2;// flagS = 0 mean it will display original image
-                if(flagS == 0)
-                    displayImageData = manipulation->verticalFlip(imageBuffer);
-                else
-                    displayImageData = toneMappedImage;
-                display();
-            }
             break;
         case 'w':
         case 'W':
@@ -83,87 +102,8 @@ void specialKeyHandle(int key, int x, int y)
     //this function will response to left arrow and right arrow and play image one by one
     switch(key){
         case GLUT_KEY_UP:
-            if(flagG && Gamma < 1.0)
-            {
-                Gamma+= 0.01;
-                std::cout << "gamma = " <<Gamma << std::endl;
-                imageData = manipulation->simpleTM(imageBuffer, Gamma);
-                toneMappedImage = manipulation->verticalFlip(imageData);
-                displayImageData = toneMappedImage;
-                display();
-                break;
-            }
-            if(flagC && C <= 95)
-            {
-                C += 5;
-                std::cout << "C = " << C << std::endl;
-                imageData = manipulation->toneMapping(imageBuffer,0, C, K);
-                toneMappedImage = manipulation->verticalFlip(imageData);
-                displayImageData = toneMappedImage;
-                display();
-                break;
-            }
-            if(flagA)
-            {
-                A += 0.05;
-                std::cout << "A = " << A << std::endl;
-                imageData = manipulation->globalOpt(imageBuffer,A);
-                toneMappedImage = manipulation->verticalFlip(imageData);
-                displayImageData = toneMappedImage;
-                display();
-                break;
-            }
-            if(flagB && K < 50)
-            {
-                K += 2;
-                std::cout << "K = " << K << std::endl;
-                imageData = manipulation->toneMapping(imageBuffer,1,C, K);
-                toneMappedImage = manipulation->verticalFlip(imageData);
-                displayImageData = toneMappedImage;
-                display();
-            }
             break;
         case GLUT_KEY_DOWN:
-            if(flagG && Gamma >0) 
-            {
-                Gamma -= 0.01;
-                std::cout << "gamma = " << Gamma << std::endl;
-                imageData = manipulation->simpleTM(imageBuffer, Gamma);
-                toneMappedImage = manipulation->verticalFlip(imageData);
-                displayImageData = toneMappedImage;
-                display();
-                break;
-            }
-            if(flagC && C >= 10)
-            {
-                C-= 5;
-                std::cout << "C = " << C << std::endl;
-                imageData = manipulation->toneMapping(imageBuffer,0, C, K);
-                toneMappedImage = manipulation->verticalFlip(imageData);
-                displayImageData = toneMappedImage;
-                display();
-                break;
-            }
-            if(flagA)
-            {
-                A -= 0.05;
-                std::cout << "A = " << A << std::endl;
-                imageData = manipulation->globalOpt(imageBuffer,A);
-                toneMappedImage = manipulation->verticalFlip(imageData);
-                displayImageData = toneMappedImage;
-                display();
-                break;
-            }
-
-            if(flagB && K > 3)
-            {
-                K -= 2;
-                std::cout << "K = " << K << std::endl;
-                imageData = manipulation->toneMapping(imageBuffer,1,C, K);
-                toneMappedImage = manipulation->verticalFlip(imageData);
-                displayImageData = toneMappedImage;
-                display();
-            }
 
             break;
         default:
@@ -171,69 +111,70 @@ void specialKeyHandle(int key, int x, int y)
     }
 }
 
+
+
+void process_input(Matrix3x3 &M){
+    char command[1024];
+    bool done;
+    float theta;
+
+   /* build identity matrix */
+    M.identity();
+
+    for(done = false; !done;) {
+        /* prompt and accept input, converting text to lower case */
+        printf("> ");
+        scanf("%s", command);
+        lowercase(command);
+
+        /* parse the input command, and read parameters as needed */
+        if(strcmp(command, "d") == 0) {
+            done = true;
+        }
+        else if(strlen(command) != 1) {
+            printf("invalid command, enter r, s, t, h, d\n");
+        }
+        else {
+            switch(command[0]) {
+                case 'r':		/* Rotation, accept angle in degrees */
+                    if(scanf("%f", &theta) == 1)
+                        Rotate(M, theta);
+                    else
+                        fprintf(stderr, "invalid rotation angle\n");
+                    break;
+                case 's':		/* Scale, accept scale factors */
+                    break;
+                case 't':		/* Translation, accept translations */
+                    break;
+                case 'h':		/* Shear, accept shear factors */
+                    break;
+                case 'd':		/* Done, that's all for now */
+                    done = true;
+                    break;
+                default:
+                    printf("invalid command, enter r, s, t, h, d\n");
+                    break;
+            }
+        }
+    }
+}
+
 void init(int argc, char* argv[])
 {
     //this function will read initial variable and read images into imageBuffer
-    
-    if(argc < 2)
-    {
-        std::cerr << "argc is to incorrect" << std::endl;
-        exit(0);
-    }
+    Matrix3x3 M(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
 
-    if(strcmp(argv[1], "-g") == 0)
-    {
-        flagG = true;
-        // if there is a flag -g
-        readFilename = argv[3];
-        if(argc > 4)
-            writeFilename = argv[4];
-        Gamma = (float)atof(argv[2]); 
-        imageBuffer = imgIO->readImage(readFilename);
-        toneMappedImage = manipulation->simpleTM(imageBuffer, Gamma );
-    }
-    else if(strcmp(argv[1], "-c") == 0)
-    {   
-        flagC = true;
-        // if there is a flag -c
-        readFilename = argv[2];
-        if(argc >= 4)
-            writeFilename = argv[3];
-        imageBuffer = imgIO->readImage(readFilename);
-        toneMappedImage = manipulation->toneMapping(imageBuffer,0, C, K);
-    }
-    else if(strcmp(argv[1], "-b") == 0)
-    {   
-        flagB = true;
-        // if there is a flag -b
-        readFilename = argv[2];
-        if(argc >= 4)
-            writeFilename = argv[3];
-        imageBuffer = imgIO->readImage(readFilename);
-        toneMappedImage = manipulation->toneMapping(imageBuffer,1 ,C, K);
-    }
-    else if(strcmp(argv[1], "-a") == 0)
-    {   
-        flagA = true;
-        // if there is a flag -o
-        readFilename = argv[2];
-        if(argc >= 4)
-            writeFilename = argv[3];
-        imageBuffer = imgIO->readImage(readFilename);
-        toneMappedImage = manipulation->globalOpt(imageBuffer, A);
-    }
+    //read in the input image
+    //
 
-    else
-    {
-        readFilename = argv[1];
-        if(argc >= 3)
-            writeFilename = argv[2];
-        imageBuffer = imgIO->readImage(readFilename);
-        toneMappedImage = imageBuffer;
-    }
-    toneMappedImage = manipulation->verticalFlip(toneMappedImage);
+    //next, build the transformation matrix
+    process_input(M);
+
+    //cout << "Accumulated Matrix: " << endl;
+    //cout << M << endl;
+
+   
     
-    displayImageData = toneMappedImage;
     windowWidth = imageBuffer->width;
     windowHeight = imageBuffer->height;
 }
