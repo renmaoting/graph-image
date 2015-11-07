@@ -16,15 +16,11 @@
 using namespace std;
 
 typedef unsigned int UINT;
-Manipulation        *manipulation = NULL;
 char*               writeFilename = NULL;
 char*               readFilename = NULL;
-char*               filtFilename = NULL;
-ImageIO*            imgIO = NULL;
 ImageData*          imageData = NULL;
 ImageData*          displayImageData = NULL;//display this structure
 ImageData*          imageBuffer;
-ImageData*          toneMappedImage;
 int                 windowWidth;
 int                 windowHeight;
 
@@ -37,32 +33,6 @@ void lowercase(char *s){
         for(i = 0; s[i] != '\0'; i++) {
             if(s[i] >= 'A' && s[i] <= 'Z')
             s[i] += ('a' - 'A');
-        }
-    }
-}
-
-/* 
-   Multiply M by a rotation matrix of angle theta
-*/
-void Rotate(Matrix3x3 &M, float theta){
-   int row, col;
-   Matrix3x3 R(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
-   double rad, c, s;
-
-   rad = PI * theta / 180.0;
-   c = cos(rad);
-   s = sin(rad);
-
-   R[0][0] = c;
-   R[0][1] = -s;
-   R[1][0] = s;
-   R[1][1] = c;
-
-   Matrix3x3 Prod = R * M;
-
-   for(row = 0; row < 3; row++) {
-        for(col = 0; col < 3; col++) {
-            M[row][col] = Prod[row][col];
         }
     }
 }
@@ -81,12 +51,9 @@ void display(void)
 void handleKey(unsigned char key, int x, int y)
 {
     switch(key){
-        case 's':
-        case 'S':
-            break;
         case 'w':
         case 'W':
-            imgIO->writeData(writeFilename, manipulation->verticalFlip(displayImageData));
+            ImageIO::writeData(writeFilename, Manipulation::verticalFlip(displayImageData));
             break;
         case 'q':               // q - quit
         case 'Q':
@@ -97,26 +64,11 @@ void handleKey(unsigned char key, int x, int y)
     }
 }
 
-void specialKeyHandle(int key, int x, int y)
-{
-    //this function will response to left arrow and right arrow and play image one by one
-    switch(key){
-        case GLUT_KEY_UP:
-            break;
-        case GLUT_KEY_DOWN:
-
-            break;
-        default:
-            break;
-    }
-}
-
-
-
 void process_input(Matrix3x3 &M){
     char command[1024];
     bool done;
     float theta;
+    int sx, sy, dx, dy, shx, shy;
 
    /* build identity matrix */
     M.identity();
@@ -138,15 +90,27 @@ void process_input(Matrix3x3 &M){
             switch(command[0]) {
                 case 'r':		/* Rotation, accept angle in degrees */
                     if(cin >> theta)
-                        Rotate(M, theta);
+                        Manipulation::rotate(M, theta);
                     else
                         cout << "invalid rotation angle\n";
                     break;
                 case 's':		/* Scale, accept scale factors */
+                    if(cin >> sx >> sy)
+                        Manipulation::scale(M, sx, sy);
+                    else
+                        cout << "invalid scale parameter\n";
                     break;
                 case 't':		/* Translation, accept translations */
+                    if(cin >> dx >> dy)
+                        Manipulation::translate(M, dx, dy);
+                    else
+                        cout << "invalid translate parameter\n";
                     break;
                 case 'h':		/* Shear, accept shear factors */
+                    if(cin >> shx >> shy)
+                        Manipulation::shear(M, dx, dy);
+                    else
+                        cout << "invalid sheer parameter\n";
                     break;
                 case 'd':		/* Done, that's all for now */
                     done = true;
@@ -161,19 +125,35 @@ void process_input(Matrix3x3 &M){
 
 void init(int argc, char* argv[])
 {
+    if(argc < 2)
+    {
+        cout << "argc is not correct!" << endl;
+        exit(-1);
+    }
     //this function will read initial variable and read images into imageBuffer
     Matrix3x3 M(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
 
     //read in the input image
-
+    readFilename = argv[1];
+    if(argc > 2)
+       writeFilename = argv[2]; 
+    imageBuffer = ImageIO::readImage(readFilename); 
     //next, build the transformation matrix
     process_input(M);
 
     //cout << "Accumulated Matrix: " << endl;
-    //cout << M << endl;
+    for(int i =0; i< 3; i++)
+    {
+        for(int j =0; j< 3; j++)
+        {
+            cout << M[i][j] << " ";
+        }
+        cout << endl; 
+    }
 
+    imageData =  Manipulation::warper(imageBuffer, M);
    
-    
+    displayImageData = Manipulation::verticalFlip(imageData); 
     windowWidth = imageBuffer->width;
     windowHeight = imageBuffer->height;
 }
@@ -188,7 +168,6 @@ int main(int argc, char* argv[])
     glutCreateWindow("a Simple window");
     glutDisplayFunc(display);
     glutKeyboardFunc(handleKey);
-    glutSpecialFunc(specialKeyHandle);//response to left arrow and right arrow
     glBlendEquation(GL_ADD);
     glEnable(GL_ALPHA_TEST);
     glAlphaFunc(GL_GREATER, 0);
