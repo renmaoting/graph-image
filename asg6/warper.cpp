@@ -165,7 +165,6 @@ void init(int argc, char* argv[])
     Matrix3x3 M(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
 
     //read in the input image
-    //
 
     //next, build the transformation matrix
     process_input(M);
