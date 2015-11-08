@@ -188,4 +188,17 @@ ImageData* Manipulation::fwdTransform(ImageData* inputImage, Matrix3x3 &M)
     return imageData;
 }
 
+ImageData* Manipulation::twirl(ImageData* inputImage, float s, float cx, float cy)
+{
+    if(inputImage== NULL)
+    {
+        std::cout<< "Manipulation::warper() parameter inputImageData shouldn't be null in Manipulation::warper!" << std::endl;
+        exit(-1);
+    }
+    
+    ImageData* imageData = new ImageData();
+    imageData = inputImage;
 
+
+    return imageData;
+}

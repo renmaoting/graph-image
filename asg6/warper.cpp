@@ -67,7 +67,7 @@ void handleKey(unsigned char key, int x, int y)
 void process_input(Matrix3x3 &M){
     char command[1024];
     bool done;
-    float theta;
+    float theta, s, cx, cy;
     int sx, sy, dx, dy, shx, shy;
 
    /* build identity matrix */
@@ -114,9 +114,16 @@ void process_input(Matrix3x3 &M){
                     break;
                 case 'd':		/* Done, that's all for now */
                     done = true;
+                    imageData =  Manipulation::warper(imageBuffer, M);
+                    break;
+                case 'n':
+                    if(cin >> s >> cx >> cy)
+                        imageData = Manipulation::twirl(imageBuffer, s, cx, cy);
+                    else
+                        cout << "invalid twirl parameter\n";
                     break;
                 default:
-                    cout << "invalid command, enter r, s, t, h, d\n";
+                    cout << "invalid command, enter r, s, t, h, d, n\n";
                     break;
             }
         }
@@ -151,8 +158,6 @@ void init(int argc, char* argv[])
         cout << endl; 
     }
 
-    imageData =  Manipulation::warper(imageBuffer, M);
-   
     displayImageData = Manipulation::verticalFlip(imageData); 
     windowWidth = imageBuffer->width;
     windowHeight = imageBuffer->height;
