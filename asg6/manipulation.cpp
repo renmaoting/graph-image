@@ -59,7 +59,7 @@ void Manipulation::rotate(Matrix3x3 &M, float theta)
     }
 }
 
-void Manipulation::translate(Matrix3x3 &M, float dx, float dy)
+void Manipulation::translate(Matrix3x3 &M, int dx, int dy)
 {
     // Multiply M by a translate matrix
     Matrix3x3 R(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
@@ -131,69 +131,24 @@ void Manipulation::scale(Matrix3x3 &M, float sx, float sy)
     }
 }
 
-ImageData* Manipulation::warper(ImageData* inputImage, Matrix3x3 &M)
+ImageData* Manipulation::fwdTransform(ImageData* inputImage, const Matrix3x3& M, int& leftMost, int& topMost)
 {
-    // create a new image and then fill it by input image as the warper matrix specified    
-    if(inputImage== NULL)
-    {
-        std::cout<< "Manipulation::warper() parameter inputImageData shouldn't be null in Manipulation::warper!" << std::endl;
-        exit(-1);
-    }
-    ImageData* imageData = fwdTransform(inputImage, M); // get a new image from forward transform
-    
-    Matrix3x3 bwMap = M.inv();// M^(-1)
-    Vector3d vecSrc;// source pixels position    
-    for(int i =0; i< imageData->height; i++)
-    {
-        for(int j =0; j< imageData->width; j++)
-        {
-            Vector3d vecDes(j+M[0][2],i+M[1][2], 1); // destination position
-            vecSrc = bwMap * vecDes;
-
-            // if the position beyond the original image, then fill in 0
-            if(vecSrc[1] >= imageData->height || vecSrc[0] < 0 || vecSrc[1] < 0 || vecSrc[0] > imageData->width)
-                for(int k =0; k< imageData->channels; k++ )
-                    imageData->pixels[i*imageData->width*imageData->channels + j* imageData->channels +k] = 0;
-            else
-                for(int k =0; k < imageData->channels; k++)
-                {
-                    int x = round(vecSrc[1]);// round to int type
-                    int y = round(vecSrc[0]);
-                    imageData->pixels[i*imageData->width*imageData->channels + j* imageData->channels +k] 
-                        = inputImage->pixels[x * inputImage->width * inputImage->channels + y* inputImage->channels + k];
-                }
-        }
-    }    
-
-
-    return imageData;
-}
-
-ImageData* Manipulation::fwdTransform(ImageData* inputImage, Matrix3x3 &M)
-{
-    // this function will use forward transform to create a new image
     if(inputImage== NULL)
     {
         std::cout<< "Manipulation::warper() parameter inputImageData shouldn't be null in Manipulation::warper!" << std::endl;
         exit(-1);
     }
 
-    std::cout << " M = "<< std::endl;
-    for(int i = 0; i< 3; i++)
-    {
-        for(int j =0; j< 3; j++)
-            std::cout << M[i][j]<<" ";
-        std::cout << std::endl;
-    }
     ImageData* imageData = new ImageData();
-    int leftMost = INT_MAX;
+    leftMost = INT_MAX;
     int rightMost = INT_MIN;
-    int topMost = INT_MAX;
+    topMost = INT_MAX;
     int bottomMost = INT_MIN; 
     for(int i =0; i< inputImage->height; i+= (inputImage->height-1))
     {
         for(int j =0; j< inputImage->width; j+= (inputImage->width-1))
         {
+            // forward transform
             Vector3d vecSrc(j, i, 1);// source position
             Vector3d vecDst = M * vecSrc;// destination position
             if(vecDst[1] > bottomMost)// determine the boundary of new image
@@ -212,6 +167,47 @@ ImageData* Manipulation::fwdTransform(ImageData* inputImage, Matrix3x3 &M)
     imageData->channels = inputImage->channels;// and channel
     std::cout << "width, height, channels of new image is = " << imageData->width << " " << imageData->height << " "<<imageData->channels << std::endl;
     imageData->pixels = new float[imageData->width * imageData->height * imageData->channels];
+ 
+    return imageData;
+}
+
+ImageData* Manipulation::warper(ImageData* inputImage, Matrix3x3 &M)
+{
+    // create a new image and then fill it by input image as the warper matrix specified    
+    if(inputImage== NULL)
+    {
+        std::cout<< "Manipulation::warper() parameter inputImageData shouldn't be null in Manipulation::warper!" << std::endl;
+        exit(-1);
+    }
+
+    int leftMost;
+    int topMost;
+    ImageData* imageData = fwdTransform(inputImage, M, leftMost, topMost);
+    
+    Matrix3x3 bwMap = M.inv();// M^(-1)
+    Vector3d vecSrc;// source pixels position    
+    for(int i =0; i< imageData->height; i++)
+    {
+        for(int j =0; j< imageData->width; j++)
+        {
+            Vector3d vecDes(j+leftMost,i+topMost, 1); // destination position
+            vecSrc = bwMap * vecDes;
+
+            // if the position beyond the original image, then fill in 0
+            int x = round(vecSrc[0]) ;// round to int type
+            int y = round(vecSrc[1]);
+            if(y >= inputImage->height || y < 0 || x < 0 || x >= inputImage->width)
+                for(int k =0; k< imageData->channels; k++ )
+                    imageData->pixels[i*imageData->width*imageData->channels + j* imageData->channels +k] = 0;
+            else
+                for(int k =0; k < imageData->channels; k++)
+                {
+                    imageData->pixels[i *imageData->width*imageData->channels + j* imageData->channels +k] 
+                        = inputImage->pixels[y * inputImage->width * inputImage->channels + x* inputImage->channels + k];
+                }
+        }
+    }    
+
 
     return imageData;
 }
@@ -227,6 +223,28 @@ ImageData* Manipulation::twirl(ImageData* inputImage, float s, float cx, float c
     ImageData* imageData = new ImageData();
     imageData = inputImage;
 
+    cx = cx * inputImage->width;
+    cy = cy * inputImage->height;
+    int md = min(inputImage->width, inputImage->height);
+    for(int i =0; i < inputImage->height; i++)
+    {
+        for(int j =0; j < inputImage->width; j++)
+        {
+            float a = s*(sqrt((j-cx) * (j-cx) + (i -cy) * (i -cy)) - md)/md;
+            int u =round((j - cx)*cos(a) + (i - cy)* sin(a) + cx);// get original pixel position
+            int v = round(-(j - cx)*sin(a) + (i - cy)* cos(a) + cy);
+
+            if(u < 0 || u >= inputImage->width || v <0 || v >= inputImage->height)
+                for(int k =0; k < imageData->channels; k++)
+                    imageData->pixels[i* imageData->width * imageData->channels + j* imageData->channels + k] = 0; 
+            else
+                for(int k =0; k < imageData->channels; k++)
+                {
+                    imageData->pixels[i* imageData->width * imageData->channels + j* imageData->channels + k] = 
+                        inputImage->pixels[v * inputImage->width * inputImage->channels + u * inputImage->channels + k]; 
+                }
+        }
+    }
 
     return imageData;
 }

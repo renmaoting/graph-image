@@ -68,7 +68,8 @@ void process_input(Matrix3x3 &M){
     char command[1024];
     bool done;
     float theta, s, cx, cy;
-    float sx, sy, dx, dy, shx, shy;
+    float sx, sy, shx, shy;
+    int dx, dy;
 
    /* build identity matrix */
     M.identity();
@@ -89,6 +90,7 @@ void process_input(Matrix3x3 &M){
                 imageData = Manipulation::twirl(imageBuffer, s, cx, cy);
             else
                 cout << "invalid twirl parameter\n";
+            done = true;
         }
         else if(strlen(command) != 1) {
             cout << "invalid command, enter r, s, t, h, d\n";
