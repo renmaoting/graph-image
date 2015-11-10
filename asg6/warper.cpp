@@ -68,7 +68,7 @@ void process_input(Matrix3x3 &M){
     char command[1024];
     bool done;
     float theta, s, cx, cy;
-    int sx, sy, dx, dy, shx, shy;
+    float sx, sy, dx, dy, shx, shy;
 
    /* build identity matrix */
     M.identity();
@@ -82,6 +82,13 @@ void process_input(Matrix3x3 &M){
         /* parse the input command, and read parameters as needed */
         if(strcmp(command, "d") == 0) {
             done = true;
+            imageData =  Manipulation::warper(imageBuffer, M);
+        }
+        else if(strcmp(command, "n") == 0) {
+            if(cin >> s >> cx >> cy)
+                imageData = Manipulation::twirl(imageBuffer, s, cx, cy);
+            else
+                cout << "invalid twirl parameter\n";
         }
         else if(strlen(command) != 1) {
             cout << "invalid command, enter r, s, t, h, d\n";
@@ -96,7 +103,10 @@ void process_input(Matrix3x3 &M){
                     break;
                 case 's':		/* Scale, accept scale factors */
                     if(cin >> sx >> sy)
+                    {
                         Manipulation::scale(M, sx, sy);
+                        cout << "s cin " << endl; 
+                    }
                     else
                         cout << "invalid scale parameter\n";
                     break;
@@ -108,19 +118,9 @@ void process_input(Matrix3x3 &M){
                     break;
                 case 'h':		/* Shear, accept shear factors */
                     if(cin >> shx >> shy)
-                        Manipulation::shear(M, dx, dy);
+                        Manipulation::shear(M, shx, shy);
                     else
                         cout << "invalid sheer parameter\n";
-                    break;
-                case 'd':		/* Done, that's all for now */
-                    done = true;
-                    imageData =  Manipulation::warper(imageBuffer, M);
-                    break;
-                case 'n':
-                    if(cin >> s >> cx >> cy)
-                        imageData = Manipulation::twirl(imageBuffer, s, cx, cy);
-                    else
-                        cout << "invalid twirl parameter\n";
                     break;
                 default:
                     cout << "invalid command, enter r, s, t, h, d, n\n";
@@ -148,7 +148,7 @@ void init(int argc, char* argv[])
     //next, build the transformation matrix
     process_input(M);
 
-    //cout << "Accumulated Matrix: " << endl;
+    cout << "Accumulated Matrix: " << endl;
     for(int i =0; i< 3; i++)
     {
         for(int j =0; j< 3; j++)
@@ -159,8 +159,8 @@ void init(int argc, char* argv[])
     }
 
     displayImageData = Manipulation::verticalFlip(imageData); 
-    windowWidth = imageBuffer->width;
-    windowHeight = imageBuffer->height;
+    windowWidth = displayImageData->width;
+    windowHeight = displayImageData->height;
 }
 
 int main(int argc, char* argv[])

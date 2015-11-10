@@ -59,7 +59,7 @@ void Manipulation::rotate(Matrix3x3 &M, float theta)
     }
 }
 
-void Manipulation::translate(Matrix3x3 &M, int dx, int dy)
+void Manipulation::translate(Matrix3x3 &M, float dx, float dy)
 {
     // Multiply M by a translate matrix
     Matrix3x3 R(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
@@ -74,9 +74,16 @@ void Manipulation::translate(Matrix3x3 &M, int dx, int dy)
             M[row][col] = prod[row][col];
         }
     }
+    std::cout << "translate M = "<< std::endl;
+    for(int i = 0; i< 3; i++)
+    {
+        for(int j =0; j< 3; j++)
+            std::cout << M[i][j]<<" ";
+        std::cout << std::endl;
+    }
 }
 
-void Manipulation::shear(Matrix3x3 &M, int shx, int shy) 
+void Manipulation::shear(Matrix3x3 &M, float shx, float shy) 
 {
     // Multiply M by a shear matrix
     Matrix3x3 R(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
@@ -91,9 +98,16 @@ void Manipulation::shear(Matrix3x3 &M, int shx, int shy)
             M[row][col] = prod[row][col];
         }
     }   
+    std::cout << "after sheer M = "<< std::endl;
+    for(int i = 0; i< 3; i++)
+    {
+        for(int j =0; j< 3; j++)
+            std::cout << M[i][j]<<" ";
+        std::cout << std::endl;
+    }
 }
     
-void Manipulation::scale(Matrix3x3 &M, int sx, int sy)
+void Manipulation::scale(Matrix3x3 &M, float sx, float sy)
 {
     // Multiply M by a scale matrix
     Matrix3x3 R(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
@@ -108,6 +122,13 @@ void Manipulation::scale(Matrix3x3 &M, int sx, int sy)
             M[row][col] = prod[row][col];
         }
     }   
+    std::cout << "after scale M = "<< std::endl;
+    for(int i = 0; i< 3; i++)
+    {
+        for(int j =0; j< 3; j++)
+            std::cout << M[i][j]<<" ";
+        std::cout << std::endl;
+    }
 }
 
 ImageData* Manipulation::warper(ImageData* inputImage, Matrix3x3 &M)
@@ -126,18 +147,18 @@ ImageData* Manipulation::warper(ImageData* inputImage, Matrix3x3 &M)
     {
         for(int j =0; j< imageData->width; j++)
         {
-            Vector3d vecDes(i, j, 1); // destination position
+            Vector3d vecDes(j+M[0][2],i+M[1][2], 1); // destination position
             vecSrc = bwMap * vecDes;
 
             // if the position beyond the original image, then fill in 0
-            if(vecSrc[0] >= imageData->height || vecSrc[0] < 0 || vecSrc[1] < 0 || vecSrc[1] > imageData->width)
+            if(vecSrc[1] >= imageData->height || vecSrc[0] < 0 || vecSrc[1] < 0 || vecSrc[0] > imageData->width)
                 for(int k =0; k< imageData->channels; k++ )
                     imageData->pixels[i*imageData->width*imageData->channels + j* imageData->channels +k] = 0;
             else
                 for(int k =0; k < imageData->channels; k++)
                 {
-                    int x = round(vecSrc[0]);// round to int type
-                    int y = round(vecSrc[1]);
+                    int x = round(vecSrc[1]);// round to int type
+                    int y = round(vecSrc[0]);
                     imageData->pixels[i*imageData->width*imageData->channels + j* imageData->channels +k] 
                         = inputImage->pixels[x * inputImage->width * inputImage->channels + y* inputImage->channels + k];
                 }
@@ -157,32 +178,39 @@ ImageData* Manipulation::fwdTransform(ImageData* inputImage, Matrix3x3 &M)
         exit(-1);
     }
 
+    std::cout << " M = "<< std::endl;
+    for(int i = 0; i< 3; i++)
+    {
+        for(int j =0; j< 3; j++)
+            std::cout << M[i][j]<<" ";
+        std::cout << std::endl;
+    }
     ImageData* imageData = new ImageData();
     int leftMost = INT_MAX;
     int rightMost = INT_MIN;
     int topMost = INT_MAX;
     int bottomMost = INT_MIN; 
-    Vector3d vecDst(0,0,0);// destination position
-    for(int i =0; i< inputImage->height; i+= inputImage->height)
+    for(int i =0; i< inputImage->height; i+= (inputImage->height-1))
     {
-        for(int j =0; j< inputImage->width; j+= inputImage->width)
+        for(int j =0; j< inputImage->width; j+= (inputImage->width-1))
         {
-            Vector3d vecSrc(i, j, 1);// source position
-            vecDst = M * vecSrc;
-            if(vecDst[0] > bottomMost)// determine the boundary of new image
-                bottomMost = vecDst[0];
-            if(vecDst[0] < topMost)
-                topMost = vecDst[0];
-            if(leftMost > vecDst[1])
-                leftMost = vecDst[1];
-            if(rightMost < vecDst[1])
-                rightMost = vecDst[1];
+            Vector3d vecSrc(j, i, 1);// source position
+            Vector3d vecDst = M * vecSrc;// destination position
+            if(vecDst[1] > bottomMost)// determine the boundary of new image
+                bottomMost = vecDst[1];
+            if(vecDst[1] < topMost)
+                topMost = vecDst[1];
+            if(leftMost > vecDst[0])
+                leftMost = vecDst[0];
+            if(rightMost < vecDst[0])
+                rightMost = vecDst[0];
         }
     }
 
-    imageData->width = rightMost - leftMost;// calculate the width
-    imageData->height = bottomMost - topMost;// calculate the height
+    imageData->width = rightMost - leftMost + 1;// calculate the width
+    imageData->height = bottomMost - topMost + 1;// calculate the height
     imageData->channels = inputImage->channels;// and channel
+    std::cout << "width, height, channels of new image is = " << imageData->width << " " << imageData->height << " "<<imageData->channels << std::endl;
     imageData->pixels = new float[imageData->width * imageData->height * imageData->channels];
 
     return imageData;
