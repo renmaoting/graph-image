@@ -179,15 +179,6 @@ ImageData* Manipulation::warper(ImageData* inputImage, Matrix3x3 &M)
     ImageData* imageData = fwdTransform(inputImage, M, leftMost, topMost);
     
     Matrix3x3 bwMap = M.inv();// M^(-1)
-    std::cout << "after inverse M = "<< std::endl;
-    for(int i = 0; i< 3; i++)
-    {
-        for(int j =0; j< 3; j++)
-        {
-            std::cout << bwMap[i][j] <<"\t";
-        }
-        std::cout << std::endl;
-    }
     Vector3d vecSrc;// source pixels position    
     for(int i =0; i< imageData->height; i++)
     {
@@ -200,11 +191,6 @@ ImageData* Manipulation::warper(ImageData* inputImage, Matrix3x3 &M)
             vecSrc[0] /= vecSrc[2];
             vecSrc[1] /= vecSrc[2];
             vecSrc[2] /= 1;
-            if(j+leftMost == 100 && i + topMost == 60)
-            {
-                std::cout << "come from: " ;
-                std::cout << vecSrc[2] << " " << vecSrc[0] << std::endl;
-            }
 
             // if the position beyond the original image, then fill in 0
             int x = round(vecSrc[0]) ;// round to int type
@@ -235,28 +221,42 @@ ImageData* Manipulation::twirl(ImageData* inputImage, float s, float cx, float c
     }
     
     ImageData* imageData = new ImageData();
-    imageData = inputImage;
+    *imageData = *inputImage;
+    std::cout << imageData->width << " height = " << imageData->height<< " ImageData->channels =" << imageData->channels << std::endl;
 
-    cx = cx * inputImage->width;
-    cy = cy * inputImage->height;
+    int cx2 = cx * inputImage->width;
+    int cy2 = cy * inputImage->height;
     int md = min(inputImage->width, inputImage->height);
-    for(int i =0; i < inputImage->height; i++)
-    {
-        for(int j =0; j < inputImage->width; j++)
-        {
-            float a = s*(sqrt((j-cx) * (j-cx) + (i -cy) * (i -cy)) - md)/md;
-            int u =round((j - cx)*cos(a) + (i - cy)* sin(a) + cx);// get original pixel position
-            int v = round(-(j - cx)*sin(a) + (i - cy)* cos(a) + cy);
+    std::cout <<cx2 << " cy2 = " << cy2 << " md = " << md << std::endl;
 
-            if(u < 0 || u >= inputImage->width || v <0 || v >= inputImage->height)
-                for(int k =0; k < imageData->channels; k++)
-                    imageData->pixels[i* imageData->width * imageData->channels + j* imageData->channels + k] = 0; 
-            else
+    for(int i =0; i < imageData->height; i++)
+    {
+        for(int j =0; j < imageData->width; j++)
+        {
+            float r = sqrt(pow(j-cx2, 2) + pow(i -cy2, 2) );
+            float a = s * (r - md)/md;
+            int u =round((j - cx2)*cos(a) + (i - cy2)* sin(a) + cx2);// get original pixel position
+            int v = round(-(j - cx2)*sin(a) + (i - cy2)* cos(a) + cy2);
+
+            //if(u < 0 || u >= inputImage->width || v <0 || v >= inputImage->height)
+            //{
+            //    for(int k =0; k < imageData->channels; k++)
+            //    {
+            //        imageData->pixels[i* imageData->width * imageData->channels + j* imageData->channels + k] = 0; 
+            //    }
+            //}
+            //else
+            //{
                 for(int k =0; k < imageData->channels; k++)
                 {
-                    imageData->pixels[i* imageData->width * imageData->channels + j* imageData->channels + k] = 
-                        inputImage->pixels[v * inputImage->width * inputImage->channels + u * inputImage->channels + k]; 
+                    if(u < 0 || u >= inputImage->width || v <0 || v >= inputImage->height)
+                        imageData->pixels[i* imageData->width * imageData->channels + j* imageData->channels + k] = 0; 
+                    else
+                        imageData->pixels[i* imageData->width * imageData->channels + j* imageData->channels + k] = 
+                            inputImage->pixels[v * inputImage->width * inputImage->channels + u * inputImage->channels + k]; 
                 }
+            
+            //}
         }
     }
 

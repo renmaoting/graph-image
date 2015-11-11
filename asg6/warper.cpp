@@ -45,6 +45,8 @@ void display(void)
         glDrawPixels(displayImageData->width, displayImageData->height, GL_LUMINANCE, GL_FLOAT, displayImageData->pixels);
     if(displayImageData->channels == 3)
         glDrawPixels(displayImageData->width, displayImageData->height, GL_RGB, GL_FLOAT, displayImageData->pixels);
+    if(displayImageData->channels == 4)
+        glDrawPixels(displayImageData->width, displayImageData->height, GL_RGBA, GL_FLOAT, displayImageData->pixels);
     glFlush();
 }
 
@@ -150,15 +152,15 @@ void init(int argc, char* argv[])
     //next, build the transformation matrix
     process_input(M);
 
-    cout << "Accumulated Matrix: " << endl;
-    for(int i =0; i< 3; i++)
-    {
-        for(int j =0; j< 3; j++)
-        {
-            cout << M[i][j] << " ";
-        }
-        cout << endl; 
-    }
+    //cout << "Accumulated Matrix: " << endl;
+    //for(int i =0; i< 3; i++)
+    //{
+    //    for(int j =0; j< 3; j++)
+    //    {
+    //        cout << M[i][j] << " ";
+    //    }
+    //    cout << endl; 
+    //}
 
     displayImageData = Manipulation::verticalFlip(imageData); 
     windowWidth = displayImageData->width;
