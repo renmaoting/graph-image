@@ -23,6 +23,6 @@ public:
     static ImageData* warper(ImageData* inputImage, Matrix3x3 &M);
     static ImageData* twirl(ImageData* inputImage, float s, float cx, float cy);
 private:
-    static ImageData* fwdTransform(ImageData* inputImage, const Matrix3x3& M, int& leftMost, int& topMost);
+    static ImageData* fwdTransform(ImageData* inputImage, Matrix3x3& M, int& leftMost, int& topMost);
 };
 #endif

@@ -74,13 +74,6 @@ void Manipulation::translate(Matrix3x3 &M, int dx, int dy)
             M[row][col] = prod[row][col];
         }
     }
-    std::cout << "translate M = "<< std::endl;
-    for(int i = 0; i< 3; i++)
-    {
-        for(int j =0; j< 3; j++)
-            std::cout << M[i][j]<<" ";
-        std::cout << std::endl;
-    }
 }
 
 void Manipulation::shear(Matrix3x3 &M, float shx, float shy) 
@@ -98,13 +91,6 @@ void Manipulation::shear(Matrix3x3 &M, float shx, float shy)
             M[row][col] = prod[row][col];
         }
     }   
-    std::cout << "after sheer M = "<< std::endl;
-    for(int i = 0; i< 3; i++)
-    {
-        for(int j =0; j< 3; j++)
-            std::cout << M[i][j]<<" ";
-        std::cout << std::endl;
-    }
 }
     
 void Manipulation::scale(Matrix3x3 &M, float sx, float sy)
@@ -122,16 +108,9 @@ void Manipulation::scale(Matrix3x3 &M, float sx, float sy)
             M[row][col] = prod[row][col];
         }
     }   
-    std::cout << "after scale M = "<< std::endl;
-    for(int i = 0; i< 3; i++)
-    {
-        for(int j =0; j< 3; j++)
-            std::cout << M[i][j]<<" ";
-        std::cout << std::endl;
-    }
 }
 
-ImageData* Manipulation::fwdTransform(ImageData* inputImage, const Matrix3x3& M, int& leftMost, int& topMost)
+ImageData* Manipulation::fwdTransform(ImageData* inputImage, Matrix3x3& M, int& leftMost, int& topMost)
 {
     if(inputImage== NULL)
     {
@@ -144,13 +123,18 @@ ImageData* Manipulation::fwdTransform(ImageData* inputImage, const Matrix3x3& M,
     int rightMost = INT_MIN;
     topMost = INT_MAX;
     int bottomMost = INT_MIN; 
-    for(int i =0; i< inputImage->height; i+= (inputImage->height-1))
+    for(int i =0; i<= inputImage->height; i+= (inputImage->height))
     {
-        for(int j =0; j< inputImage->width; j+= (inputImage->width-1))
+        for(int j =0; j<= inputImage->width; j+= (inputImage->width))
         {
             // forward transform
             Vector3d vecSrc(j, i, 1);// source position
             Vector3d vecDst = M * vecSrc;// destination position
+            
+            vecDst[0] /= vecDst[2];
+            vecDst[1] /= vecDst[2];
+            vecDst[2] /= 1;
+
             if(vecDst[1] > bottomMost)// determine the boundary of new image
                 bottomMost = vecDst[1];
             if(vecDst[1] < topMost)
@@ -162,8 +146,8 @@ ImageData* Manipulation::fwdTransform(ImageData* inputImage, const Matrix3x3& M,
         }
     }
 
-    imageData->width = rightMost - leftMost + 1;// calculate the width
-    imageData->height = bottomMost - topMost + 1;// calculate the height
+    imageData->width = rightMost - leftMost ;// calculate the width
+    imageData->height = bottomMost - topMost ;// calculate the height
     imageData->channels = inputImage->channels;// and channel
     std::cout << "width, height, channels of new image is = " << imageData->width << " " << imageData->height << " "<<imageData->channels << std::endl;
     imageData->pixels = new float[imageData->width * imageData->height * imageData->channels];
@@ -179,12 +163,31 @@ ImageData* Manipulation::warper(ImageData* inputImage, Matrix3x3 &M)
         std::cout<< "Manipulation::warper() parameter inputImageData shouldn't be null in Manipulation::warper!" << std::endl;
         exit(-1);
     }
+    M[0][0] = 0;
+    M[0][1] = 2;
+    M[0][2] = -100;
+    M[1][0] = 2;
+    M[1][1] = 0;
+    M[1][2] = 0;
+    M[2][0] = 0.01;
+    M[2][1] = 0;
+    M[2][2] = 1;
+
 
     int leftMost;
     int topMost;
     ImageData* imageData = fwdTransform(inputImage, M, leftMost, topMost);
     
     Matrix3x3 bwMap = M.inv();// M^(-1)
+    std::cout << "after inverse M = "<< std::endl;
+    for(int i = 0; i< 3; i++)
+    {
+        for(int j =0; j< 3; j++)
+        {
+            std::cout << bwMap[i][j] <<"\t";
+        }
+        std::cout << std::endl;
+    }
     Vector3d vecSrc;// source pixels position    
     for(int i =0; i< imageData->height; i++)
     {
@@ -192,6 +195,16 @@ ImageData* Manipulation::warper(ImageData* inputImage, Matrix3x3 &M)
         {
             Vector3d vecDes(j+leftMost,i+topMost, 1); // destination position
             vecSrc = bwMap * vecDes;
+
+
+            vecSrc[0] /= vecSrc[2];
+            vecSrc[1] /= vecSrc[2];
+            vecSrc[2] /= 1;
+            if(j+leftMost == 100 && i + topMost == 60)
+            {
+                std::cout << "come from: " ;
+                std::cout << vecSrc[2] << " " << vecSrc[0] << std::endl;
+            }
 
             // if the position beyond the original image, then fill in 0
             int x = round(vecSrc[0]) ;// round to int type
@@ -205,6 +218,7 @@ ImageData* Manipulation::warper(ImageData* inputImage, Matrix3x3 &M)
                     imageData->pixels[i *imageData->width*imageData->channels + j* imageData->channels +k] 
                         = inputImage->pixels[y * inputImage->width * inputImage->channels + x* inputImage->channels + k];
                 }
+
         }
     }    
 
