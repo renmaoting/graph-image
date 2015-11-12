@@ -163,16 +163,6 @@ ImageData* Manipulation::warper(ImageData* inputImage, Matrix3x3 &M)
         std::cout<< "Manipulation::warper() parameter inputImageData shouldn't be null in Manipulation::warper!" << std::endl;
         exit(-1);
     }
-    M[0][0] = 0;
-    M[0][1] = 2;
-    M[0][2] = -100;
-    M[1][0] = 2;
-    M[1][1] = 0;
-    M[1][2] = 0;
-    M[2][0] = 0.01;
-    M[2][1] = 0;
-    M[2][2] = 1;
-
 
     int leftMost;
     int topMost;
@@ -222,7 +212,7 @@ ImageData* Manipulation::twirl(ImageData* inputImage, float s, float cx, float c
     
     ImageData* imageData = new ImageData();
     *imageData = *inputImage;
-    std::cout << imageData->width << " height = " << imageData->height<< " ImageData->channels =" << imageData->channels << std::endl;
+    //std::cout << imageData->width << " height = " << imageData->height<< " ImageData->channels =" << imageData->channels << std::endl;
 
     int cx2 = cx * inputImage->width;
     int cy2 = cy * inputImage->height;

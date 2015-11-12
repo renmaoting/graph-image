@@ -152,15 +152,15 @@ void init(int argc, char* argv[])
     //next, build the transformation matrix
     process_input(M);
 
-    //cout << "Accumulated Matrix: " << endl;
-    //for(int i =0; i< 3; i++)
-    //{
-    //    for(int j =0; j< 3; j++)
-    //    {
-    //        cout << M[i][j] << " ";
-    //    }
-    //    cout << endl; 
-    //}
+    cout << "Accumulated Matrix: " << endl;
+    for(int i =0; i< 3; i++)
+    {
+        for(int j =0; j< 3; j++)
+        {
+            cout << M[i][j] << " \t";
+        }
+        cout << endl; 
+    }
 
     displayImageData = Manipulation::verticalFlip(imageData); 
     windowWidth = displayImageData->width;
