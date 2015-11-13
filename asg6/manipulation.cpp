@@ -177,7 +177,6 @@ ImageData* Manipulation::warper(ImageData* inputImage, Matrix3x3 &M)
             Vector3d vecDes(j+leftMost,i+topMost, 1); // destination position
             vecSrc = bwMap * vecDes;
 
-
             if(vecSrc[2] != 0 && vecSrc[2] != 1)// normalization when the w component is not 1
             {
                 vecSrc[0] /= vecSrc[2];
@@ -225,20 +224,18 @@ ImageData* Manipulation::twirl(ImageData* inputImage, float s, float cx, float c
     int cx2 = cx * inputImage->width;//  centerX
     int cy2 = cy * inputImage->height;// centerY
     int md = min(inputImage->width, inputImage->height);
-
+    float theta;
     for(int i =0; i < imageData->height; i++)
     {
         for(int j =0; j < imageData->width; j++)
         {
-            // when use inverse mapping, can get the original coordinate by destination coordinate, the equation is as followings
-            // u = (x -centerX) * cos(a) + (y - centerY ) * sin(a) + centerX
-            // v = -(x - centerX) * sin(a) + (y - centerY) * cos(a) + centerY
-            // a = strength(sqrt(pow(x - centerX, 2) + pow(y - centerY, 2) - md )/ md
+            // use inverse mapping
             // md = min(WIDTH, HEIGHT)
             float r = sqrt(pow(j-cx2, 2) + pow(i -cy2, 2) );
             float a = s * (r - md)/md;
-            int u =round((j - cx2)*cos(a) + (i - cy2)* sin(a) + cx2);// get original pixel position
-            int v = round(-(j - cx2)*sin(a) + (i - cy2)* cos(a) + cy2);
+            theta = atan2(i - cy2, j - cx2) ;
+            int u = round(r * cos(theta + a) + cx2);// get original pixel position
+            int v = round(r * sin(theta + a) + cy2);
 
             if(u < 0 || u >= inputImage->width || v <0 || v >= inputImage->height)// handle the pixels that out of original image
             {
