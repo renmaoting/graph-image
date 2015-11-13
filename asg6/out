@@ -1,9 +1,0 @@
-width : 471
-height : 444
-num channels: 4
-read succed!
-> 471 height = 444
-Accumulated Matrix: 
-1 0 0 
-0 1 0 
-0 0 1 

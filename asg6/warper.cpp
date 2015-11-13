@@ -11,7 +11,7 @@
 #include "imageIO.h"
 #include <string.h>
 #include <cmath>
-#include "vecmat/Matrix.h"
+#include "Matrix.h"
 
 using namespace std;
 
@@ -87,7 +87,7 @@ void process_input(Matrix3x3 &M){
             done = true;
             imageData =  Manipulation::warper(imageBuffer, M);
         }
-        else if(strcmp(command, "n") == 0) {
+        else if(strcmp(command, "n") == 0) {// twirl 
             if(cin >> s >> cx >> cy)
                 imageData = Manipulation::twirl(imageBuffer, s, cx, cy);
             else
@@ -109,18 +109,17 @@ void process_input(Matrix3x3 &M){
                     if(cin >> sx >> sy)
                     {
                         Manipulation::scale(M, sx, sy);
-                        cout << "s cin " << endl; 
                     }
                     else
                         cout << "invalid scale parameter\n";
                     break;
-                case 't':		/* Translation, accept translations */
+                case 't':		/* Translation */
                     if(cin >> dx >> dy)
                         Manipulation::translate(M, dx, dy);
                     else
                         cout << "invalid translate parameter\n";
                     break;
-                case 'h':		/* Shear, accept shear factors */
+                case 'h':		/* Shear */
                     if(cin >> shx >> shy)
                         Manipulation::shear(M, shx, shy);
                     else

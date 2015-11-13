@@ -1,0 +1,60 @@
+/*************************************************************************
+	> File Name: README
+	> Author: Maoting Ren
+	> Mail: mren@g.clemson.edu
+	> Created Time: Thu 12 Nov 2015 03:05:44 PM EST
+ ************************************************************************/
+
+
+This README is for pa6.
+This project will read some parameters that represent matrixs like translate, rotate, scale, and shear,
+and then compose a single transform from the sequence, and finally will apply the transform to the input
+image via inverse mapping.
+
+Mainly add the following functions in this project, this function are all in manipulation.h and manipulation.cpp
+you can see details in them:
+
+1. static void translate(Matrix3x3 &M, int dx, int dy);
+    This function is to accumulate a translate matrix
+
+2. static void rotate(Matrix3x3 &M, float theta);
+    This function is to accumulate a rotate matrix
+
+3. static void shear(Matrix3x3 &M, float shx, float shy); 
+    This function is to accumulate a shear matrix
+
+4. static void scale(Matrix3x3 &M, float sx, float sy);
+    This function is to accumulate a scale matrix
+
+5. static ImageData* warper(ImageData* inputImage, Matrix3x3 &M);
+    This function is to imply the accumulated matrix to the original, and use inverse map to get the new image
+
+6. static ImageData* fwdTransform(ImageData* inputImage, Matrix3x3& M, int& leftMost, int& topMost);
+    This function is to compute the size of new image use forward map, and make space for the new image
+
+7. static ImageData* twirl(ImageData* inputImage, float s, float cx, float cy);
+    This function is to use nolinear warping "twirl", this function I don't use Matrix and Vector class, just 
+    compute the inverse equation based on the forward map.
+
+
+When running this routine, you can test it using a script, like this:
+        ./warper a.jpg save.jpg < in
+    which "in" is the input script, you can add parameters in it, like this:
+        r 45
+        t 100 100 
+        h 0.5 0.5
+        d
+
+And if you want to execute twirl warp, you can add parameters in "in" like this:
+        r 45
+        t 100 100 
+        h 0.5 0.5
+        n 3.75 0.5 0.5
+
+Also, you can input parameters by keyboard. Like this:
+        ./warper a.jpg save.jpg
+and then input like this:
+        t 100 100
+        r 45
+        h 0.5 0.5
+        d

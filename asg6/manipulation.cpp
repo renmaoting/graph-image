@@ -20,7 +20,7 @@ ImageData* Manipulation::verticalFlip(ImageData* inputImage)
     // this function will vertically flip the image
     if(inputImage== NULL)
     {
-        std::cout<< "Manipulation::verticalFlip() parameter inputImageData shouldn't be null in Manipulation::verticalFlip!" << std::endl;
+        std::cout<< "Manipulation::verticalFlip() parameter inputImageData shouldn't be null!" << std::endl;
         exit(-1);
     }
     ImageData* imageData = new ImageData();
@@ -114,7 +114,7 @@ ImageData* Manipulation::fwdTransform(ImageData* inputImage, Matrix3x3& M, int& 
 {
     if(inputImage== NULL)
     {
-        std::cout<< "Manipulation::warper() parameter inputImageData shouldn't be null in Manipulation::warper!" << std::endl;
+        std::cout<< "Manipulation::fwdTransform() parameter inputImageData shouldn't be null !" << std::endl;
         exit(-1);
     }
 
@@ -160,7 +160,7 @@ ImageData* Manipulation::warper(ImageData* inputImage, Matrix3x3 &M)
     // create a new image and then fill it by input image as the warper matrix specified    
     if(inputImage== NULL)
     {
-        std::cout<< "Manipulation::warper() parameter inputImageData shouldn't be null in Manipulation::warper!" << std::endl;
+        std::cout<< "Manipulation::warper() parameter inputImageData shouldn't be null!" << std::endl;
         exit(-1);
     }
 
@@ -178,18 +178,21 @@ ImageData* Manipulation::warper(ImageData* inputImage, Matrix3x3 &M)
             vecSrc = bwMap * vecDes;
 
 
-            vecSrc[0] /= vecSrc[2];
-            vecSrc[1] /= vecSrc[2];
-            vecSrc[2] /= 1;
+            if(vecSrc[2] != 0 && vecSrc[2] != 1)// normalization when the w component is not 1
+            {
+                vecSrc[0] /= vecSrc[2];
+                vecSrc[1] /= vecSrc[2];
+                vecSrc[2] /= 1;
+            }
 
             // if the position beyond the original image, then fill in 0
             int x = round(vecSrc[0]) ;// round to int type
             int y = round(vecSrc[1]);
-            if(y >= inputImage->height || y < 0 || x < 0 || x >= inputImage->width)
+            if(y >= inputImage->height || y < 0 || x < 0 || x >= inputImage->width)// handle the pixels that out of original image
                 for(int k =0; k< imageData->channels; k++ )
                     imageData->pixels[i*imageData->width*imageData->channels + j* imageData->channels +k] = 0;
             else
-                for(int k =0; k < imageData->channels; k++)
+                for(int k =0; k < imageData->channels; k++)// inverse mapping
                 {
                     imageData->pixels[i *imageData->width*imageData->channels + j* imageData->channels +k] 
                         = inputImage->pixels[y * inputImage->width * inputImage->channels + x* inputImage->channels + k];
@@ -198,55 +201,61 @@ ImageData* Manipulation::warper(ImageData* inputImage, Matrix3x3 &M)
         }
     }    
 
-
     return imageData;
 }
 
 ImageData* Manipulation::twirl(ImageData* inputImage, float s, float cx, float cy)
 {
+    //this function will twirl image
     if(inputImage== NULL)
     {
-        std::cout<< "Manipulation::warper() parameter inputImageData shouldn't be null in Manipulation::warper!" << std::endl;
+        std::cout<< "Manipulation::twirl() parameter inputImageData shouldn't be null!" << std::endl;
+        exit(-1);
+    }
+    if( cx <= 0 || cx >= 1 || cy <= 0 || cy >= 1)
+    {
+        std::cout<< "Manipulation::twirl() parameter cx, cy should be between (0, 1)!" << std::endl;
         exit(-1);
     }
     
     ImageData* imageData = new ImageData();
-    *imageData = *inputImage;
-    //std::cout << imageData->width << " height = " << imageData->height<< " ImageData->channels =" << imageData->channels << std::endl;
+    *imageData = *inputImage;// this is a bad idea, which if use unproplely, may cause bugs that can hardly to find out
+    std::cout << "new image width = " << imageData->width << " height = " << imageData->height<< " channels =" << imageData->channels << std::endl;
 
-    int cx2 = cx * inputImage->width;
-    int cy2 = cy * inputImage->height;
+    int cx2 = cx * inputImage->width;//  centerX
+    int cy2 = cy * inputImage->height;// centerY
     int md = min(inputImage->width, inputImage->height);
-    std::cout <<cx2 << " cy2 = " << cy2 << " md = " << md << std::endl;
 
     for(int i =0; i < imageData->height; i++)
     {
         for(int j =0; j < imageData->width; j++)
         {
+            // when use inverse mapping, can get the original coordinate by destination coordinate, the equation is as followings
+            // u = (x -centerX) * cos(a) + (y - centerY ) * sin(a) + centerX
+            // v = -(x - centerX) * sin(a) + (y - centerY) * cos(a) + centerY
+            // a = strength(sqrt(pow(x - centerX, 2) + pow(y - centerY, 2) - md )/ md
+            // md = min(WIDTH, HEIGHT)
             float r = sqrt(pow(j-cx2, 2) + pow(i -cy2, 2) );
             float a = s * (r - md)/md;
             int u =round((j - cx2)*cos(a) + (i - cy2)* sin(a) + cx2);// get original pixel position
             int v = round(-(j - cx2)*sin(a) + (i - cy2)* cos(a) + cy2);
 
-            //if(u < 0 || u >= inputImage->width || v <0 || v >= inputImage->height)
-            //{
-            //    for(int k =0; k < imageData->channels; k++)
-            //    {
-            //        imageData->pixels[i* imageData->width * imageData->channels + j* imageData->channels + k] = 0; 
-            //    }
-            //}
-            //else
-            //{
+            if(u < 0 || u >= inputImage->width || v <0 || v >= inputImage->height)// handle the pixels that out of original image
+            {
                 for(int k =0; k < imageData->channels; k++)
                 {
-                    if(u < 0 || u >= inputImage->width || v <0 || v >= inputImage->height)
-                        imageData->pixels[i* imageData->width * imageData->channels + j* imageData->channels + k] = 0; 
-                    else
-                        imageData->pixels[i* imageData->width * imageData->channels + j* imageData->channels + k] = 
-                            inputImage->pixels[v * inputImage->width * inputImage->channels + u * inputImage->channels + k]; 
+                    imageData->pixels[i* imageData->width * imageData->channels + j* imageData->channels + k] = 0; 
+                }
+            }
+            else
+            {
+                for(int k =0; k < imageData->channels; k++)// inverse mapping
+                {
+                    imageData->pixels[i* imageData->width * imageData->channels + j* imageData->channels + k] = 
+                        inputImage->pixels[v * inputImage->width * inputImage->channels + u * inputImage->channels + k]; 
                 }
             
-            //}
+            }
         }
     }
 
