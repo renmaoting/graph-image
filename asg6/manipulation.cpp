@@ -251,7 +251,6 @@ ImageData* Manipulation::twirl(ImageData* inputImage, float s, float cx, float c
                     imageData->pixels[i* imageData->width * imageData->channels + j* imageData->channels + k] = 
                         inputImage->pixels[v * inputImage->width * inputImage->channels + u * inputImage->channels + k]; 
                 }
-            
             }
         }
     }
