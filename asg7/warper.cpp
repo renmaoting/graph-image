@@ -23,6 +23,9 @@ ImageData*          displayImageData = NULL;//display this structure
 ImageData*          imageBuffer;
 int                 windowWidth;
 int                 windowHeight;
+int                 R =0;//R%2 = 0, linear interpolation
+                         //R%2 = 1, bilinear interpolation
+Matrix3x3 M(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
 
 /*
    Convert the string s to lower case
@@ -57,6 +60,20 @@ void handleKey(unsigned char key, int x, int y)
         case 'W':
             ImageIO::writeData(writeFilename, Manipulation::verticalFlip(displayImageData));
             break;
+        case 'r':
+        case 'R':
+            R++;
+            if(R%2 == 0)
+            {
+                displayImageData =  Manipulation::warper(imageData, M, 0);
+                display(); 
+            }
+            else
+            {
+                displayImageData =  Manipulation::warper(imageData, M, 1);
+                display();
+            }
+            break;
         case 'q':               // q - quit
         case 'Q':
         case 27:                // esc - quit
@@ -66,7 +83,7 @@ void handleKey(unsigned char key, int x, int y)
     }
 }
 
-void process_input(Matrix3x3 &M){
+void process_input(){
     char command[1024];
     bool done;
     float theta, s, cx, cy;
@@ -85,7 +102,7 @@ void process_input(Matrix3x3 &M){
         /* parse the input command, and read parameters as needed */
         if(strcmp(command, "d") == 0) {
             done = true;
-            imageData =  Manipulation::warper(imageData, M, 1);
+            displayImageData =  Manipulation::warper(imageData, M, 0);
         }
         else if(strcmp(command, "n") == 0) {// twirl 
             if(cin >> s >> cx >> cy)
@@ -147,7 +164,6 @@ void init(int argc, char* argv[])
         exit(-1);
     }
     //this function will read initial variable and read images into imageBuffer
-    Matrix3x3 M(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
 
     //read in the input image
     readFilename = argv[1];
@@ -156,7 +172,7 @@ void init(int argc, char* argv[])
     imageBuffer = ImageIO::readImage(readFilename); 
     imageData = Manipulation::verticalFlip(imageBuffer); 
     //next, build the transformation matrix
-    process_input(M);
+    process_input();
 
     cout << "Accumulated Matrix: " << endl;
     for(int i =0; i< 3; i++)
@@ -168,7 +184,6 @@ void init(int argc, char* argv[])
         cout << endl; 
     }
 
-    displayImageData = imageData; 
     windowWidth = displayImageData->width;
     windowHeight = displayImageData->height;
 }
