@@ -175,7 +175,31 @@ ImageData* Manipulation::fwdTransform(ImageData* inputImage, Matrix3x3& M, int& 
     return imageData;
 }
 
-ImageData* Manipulation::warper(ImageData* inputImage, Matrix3x3 &M)
+float Manipulation::bilinear(ImageData* inputImage, Vector3d& vecSrc, int k)
+{
+    int x = floor(vecSrc[0]);
+    int y = floor(vecSrc[1]);
+    int a = vecSrc[0] - x;
+    int b = vecSrc[1] - y;
+
+    float value4 = inputImage->pixels[(y+1) * inputImage->width * inputImage->channels + (x+1)* inputImage->channels + k];
+    float value3 = inputImage->pixels[(y+1) * inputImage->width * inputImage->channels + x* inputImage->channels + k];
+    float value2 = inputImage->pixels[y * inputImage->width * inputImage->channels + (x+1)* inputImage->channels + k];
+    float value1 = inputImage->pixels[y * inputImage->width * inputImage->channels + x* inputImage->channels + k];
+
+    Vector2d vecF(1- b,b);
+    Vector2d vecB(1- a,a);
+    Matrix2x2 m(value1, value2, value3, value4);
+    float value = vecF * m * vecB;
+    return value;
+}
+
+float Manipulation::linear(ImageData* inputImage, Vector3d& vecSrc, int k)
+{
+
+}
+
+ImageData* Manipulation::warper(ImageData* inputImage, Matrix3x3 &M, bool flag)
 {
     // create a new image and then fill it by input image as the warper matrix specified    
     if(inputImage== NULL)
@@ -205,16 +229,25 @@ ImageData* Manipulation::warper(ImageData* inputImage, Matrix3x3 &M)
             }
 
             // if the position beyond the original image, then fill in 0
-            int x = round(vecSrc[0]) ;// round to int type
-            int y = round(vecSrc[1]);
-            if(y >= inputImage->height || y < 0 || x < 0 || x >= inputImage->width)// handle the pixels that out of original image
+            //int x = round(vecSrc[0]) ;// round to int type
+            //int y = round(vecSrc[1]);
+
+            if(vecSrc[1] >= inputImage->height || vecSrc[1] < 0 || vecSrc[0] < 0 || vecSrc[0] >= inputImage->width)// handle the pixels that out of original image
                 for(int k =0; k< imageData->channels; k++ )
                     imageData->pixels[i*imageData->width*imageData->channels + j* imageData->channels +k] = 0;
             else
                 for(int k =0; k < imageData->channels; k++)// inverse mapping
                 {
-                    imageData->pixels[i *imageData->width*imageData->channels + j* imageData->channels +k] 
-                        = inputImage->pixels[y * inputImage->width * inputImage->channels + x* inputImage->channels + k];
+                    // use bilinear interpolation
+                    if(flag == 0)
+                    {
+                    
+                    }
+                    else if(flag == 1)
+                    {
+                        float value = bilinear(inputImage, vecSrc, k);
+                        imageData->pixels[i *imageData->width*imageData->channels + j* imageData->channels +k] = value;
+                    }
                 }
         }
     }    

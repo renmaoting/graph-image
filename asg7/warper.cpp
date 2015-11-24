@@ -85,7 +85,7 @@ void process_input(Matrix3x3 &M){
         /* parse the input command, and read parameters as needed */
         if(strcmp(command, "d") == 0) {
             done = true;
-            imageData =  Manipulation::warper(imageData, M);
+            imageData =  Manipulation::warper(imageData, M, 1);
         }
         else if(strcmp(command, "n") == 0) {// twirl 
             if(cin >> s >> cx >> cy)
