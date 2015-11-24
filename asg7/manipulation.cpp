@@ -169,7 +169,8 @@ ImageData* Manipulation::fwdTransform(ImageData* inputImage, Matrix3x3& M, int& 
     imageData->width = rightMost - leftMost ;// calculate the width
     imageData->height = bottomMost - topMost ;// calculate the height
     imageData->channels = inputImage->channels;// and channel
-    std::cout << "width, height, channels of new image is = " << imageData->width << " " << imageData->height << " "<<imageData->channels << std::endl;
+    std::cout << "width, height, channels of new image is = " << imageData->width << " " 
+        << imageData->height << " "<<imageData->channels << std::endl;
     imageData->pixels = new float[imageData->width * imageData->height * imageData->channels];
  
     return imageData;
@@ -177,11 +178,18 @@ ImageData* Manipulation::fwdTransform(ImageData* inputImage, Matrix3x3& M, int& 
 
 float Manipulation::bilinear(ImageData* inputImage, Vector3d& vecSrc, int k)
 {
+    if(inputImage== NULL)
+    {
+        std::cout<< "Manipulation::bilinear() parameter inputImageData shouldn't be null!" << std::endl;
+        exit(-1);
+    }
+
     int x = floor(vecSrc[0]);
     int y = floor(vecSrc[1]);
-    int a = vecSrc[0] - x;
-    int b = vecSrc[1] - y;
+    float a = vecSrc[0] - x;
+    float b = vecSrc[1] - y;
 
+    // four around pixels' value
     float value4 = inputImage->pixels[(y+1) * inputImage->width * inputImage->channels + (x+1)* inputImage->channels + k];
     float value3 = inputImage->pixels[(y+1) * inputImage->width * inputImage->channels + x* inputImage->channels + k];
     float value2 = inputImage->pixels[y * inputImage->width * inputImage->channels + (x+1)* inputImage->channels + k];
@@ -190,13 +198,44 @@ float Manipulation::bilinear(ImageData* inputImage, Vector3d& vecSrc, int k)
     Vector2d vecF(1- b,b);
     Vector2d vecB(1- a,a);
     Matrix2x2 m(value1, value2, value3, value4);
+    // value = (1- b, b) * M * (1- a, a)
     float value = vecF * m * vecB;
     return value;
 }
 
-float Manipulation::linear(ImageData* inputImage, Vector3d& vecSrc, int k)
+float Manipulation::superSampling(ImageData* inputImage, Matrix3x3& M, Vector3d& vecDes, int k)
 {
+    if(inputImage== NULL)
+    {
+        std::cout<< "Manipulation::superSampling() parameter inputImageData shouldn't be null!" << std::endl;
+        exit(-1);
+    }
+    
+    // choose 9 pixels for each super sample
+    float leftMost= (vecDes[0] -0.5)>0?(vecDes[0] -0.5):0;
+    float topMost= (vecDes[1]+0.5)<inputImage->height?(vecDes[1]+0.5):(inputImage->height - 0.5);
+    float rightMost= (vecDes[0] +0.5)<inputImage->width?(vecDes[0] +0.5):(inputImage->width -0.5);
+    float bottomMost= (vecDes[1] -0.5)>0?(vecDes[1]-0.5):0;
+    
+    int num =0;
+    float sum =0;
+    for(int i = bottomMost*10; i < topMost*10; i+=5)
+    {
+        for(int j = leftMost*10; j < rightMost*10; j+=5)
+        {
+            Vector3d tem(j/10.0, i/10.0, 1);
+            Vector3d vecSrc = M * tem;                
+            if(vecSrc[2] != 0 && vecSrc[2] != 1)// normalization when the w component is not 1
+            {
+                vecSrc[0] /= vecSrc[2];
+                vecSrc[1] /= vecSrc[2];
+                vecSrc[2] /= 1;
+            }
+            sum += bilinear(inputImage, vecSrc, k);
+        }
+    }
 
+    return sum/num;
 }
 
 ImageData* Manipulation::warper(ImageData* inputImage, Matrix3x3 &M, bool flag)
@@ -228,24 +267,25 @@ ImageData* Manipulation::warper(ImageData* inputImage, Matrix3x3 &M, bool flag)
                 vecSrc[2] /= 1;
             }
 
-            // if the position beyond the original image, then fill in 0
-            //int x = round(vecSrc[0]) ;// round to int type
-            //int y = round(vecSrc[1]);
-
-            if(vecSrc[1] >= inputImage->height || vecSrc[1] < 0 || vecSrc[0] < 0 || vecSrc[0] >= inputImage->width)// handle the pixels that out of original image
+            // handle the pixels that out of original image
+            if(vecSrc[1] >= inputImage->height || vecSrc[1] < 0 || vecSrc[0] < 0 || vecSrc[0] >= inputImage->width)
                 for(int k =0; k< imageData->channels; k++ )
                     imageData->pixels[i*imageData->width*imageData->channels + j* imageData->channels +k] = 0;
             else
                 for(int k =0; k < imageData->channels; k++)// inverse mapping
                 {
-                    // use bilinear interpolation
                     if(flag == 0)
                     {
-                    
+                        int x = round(vecSrc[0]) ;// round to int type
+                        int y = round(vecSrc[1]);
+                        imageData->pixels[i *imageData->width*imageData->channels + j* imageData->channels +k] =
+                            inputImage->pixels[y * inputImage->width * inputImage->channels + x* inputImage->channels + k];
                     }
                     else if(flag == 1)
                     {
+                        // use bilinear interpolation
                         float value = bilinear(inputImage, vecSrc, k);
+                        //float value = superSampling(inputImage, bwMap,vecDes, k);
                         imageData->pixels[i *imageData->width*imageData->channels + j* imageData->channels +k] = value;
                     }
                 }
