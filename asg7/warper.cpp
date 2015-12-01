@@ -21,11 +21,16 @@ char*               readFilename = NULL;
 ImageData*          imageData = NULL;
 ImageData*          displayImageData = NULL;//display this structure
 ImageData*          imageBuffer;
+ImageData*          oriWarpImg = NULL;
+ImageData*          biAndSupImg = NULL;
+bool                nFlag = false; 
 int                 windowWidth;
 int                 windowHeight;
 int                 R =0;//R%2 = 0, linear interpolation
                          //R%2 = 1, bilinear interpolation
+
 Matrix3x3 M(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+float theta, s, cx, cy;
 
 /*
    Convert the string s to lower case
@@ -65,12 +70,29 @@ void handleKey(unsigned char key, int x, int y)
             R++;
             if(R%2 == 0)
             {
-                displayImageData =  Manipulation::warper(imageData, M, 0);
+                if(oriWarpImg == NULL)
+                {
+                    if(nFlag == false) 
+                        oriWarpImg = Manipulation::warper(imageData, M, 0);
+                    else 
+                        oriWarpImg = Manipulation::twirl(imageData, s, cx, cy,0);
+                }
+                displayImageData = oriWarpImg;
                 display(); 
             }
             else
             {
-                displayImageData =  Manipulation::warper(imageData, M, 1);
+                if(biAndSupImg == NULL)
+                {
+                    if(nFlag == false) 
+                        biAndSupImg = Manipulation::warper(imageData, M, 1);
+                    else 
+                    {
+                        biAndSupImg = Manipulation::twirl(imageData, s, cx, cy,1);
+                    }
+                }
+                
+                displayImageData = biAndSupImg;
                 display();
             }
             break;
@@ -86,7 +108,6 @@ void handleKey(unsigned char key, int x, int y)
 void process_input(){
     char command[1024];
     bool done;
-    float theta, s, cx, cy;
     float sx, sy, shx, shy, px, py;
     int dx, dy;
 
@@ -106,7 +127,10 @@ void process_input(){
         }
         else if(strcmp(command, "n") == 0) {// twirl 
             if(cin >> s >> cx >> cy)
-                imageData = Manipulation::twirl(imageData, s, cx, cy);
+            {
+                displayImageData = Manipulation::twirl(imageData, s, cx, cy, 0);
+                nFlag = true; 
+            }
             else
                 cout << "invalid twirl parameter\n";
             done = true;

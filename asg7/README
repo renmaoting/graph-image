@@ -1,0 +1,69 @@
+/*************************************************************************
+	> File Name: README
+	> Author:Maoting Ren 
+	> Mail: mren@g.clemson.edu
+	> Created Time: Tue 24 Nov 2015 07:47:39 PM EST
+ ************************************************************************/
+
+
+This project can mainly divide into three parts,and 
+    1. The first one is perspective warp, you can test the effect by this command:
+            ./warper construction.tif <in
+       and write these parameters into "in" file:
+            p 0.002 -0.001
+            d
+
+    2. The second one is bilinear interpolation, which is used to repairs magnification artifacts.
+
+    3. The third one is superSampling, which is used to removing the aliasing artifacts in the minified region
+
+    You can test effect of the second and third one by press "r" key, I do the bilinear and superSampling 
+    simultaneously, as a result I can get a more better result, which has been repaired the magnification 
+    artifacts and aliasing artifacts. You can see my repaired image in this dictionary which named "repaired.jgp"
+
+For superSampling, I choose nine positions for one pixel, for example: if the pixel's position is (1, 1),then
+I should choose other position as a pixel position like
+    (0.5, 0.5) (1.0, 0.5) (1.5, 0.5) 
+    (0.5, 1.0) (1.0, 1.0) (1.5, 1.0) 
+    (0.5, 1.5) (1.0, 1.5) (1.5, 1.5) 
+and then take all these positions use inverse mapping to find the position in input image. And for each position
+in input image, then use the bilinear strategy to get this output pixel sample's vaule. After compute all this 
+samples' value, then take the average vaule as this position's pixel's value. Do this for each channel of one
+pixel. And this is my superSampling strategy.
+
+
+You can also imply this operation to twirl by using this command:
+    ./warper construction.tif <in
+and write this parameters in "in" file:
+    n 3.75 0.5 0.5
+Then you can press "r" or "R" to repair magnification artifacts and aliasing artifacts
+
+
+In this project, I mainly add those functions, they are all in manipulation.h and manipulation.cpp
+1.  static ImageData* twirl(ImageData* inputImage, float s, float cx, float cy, bool flag);
+    this function is used to twirl the image, and flag = 0, means donot use repair strategy, flag = 1
+    means use bilinear and superSampling strategy to repair image.
+
+2.  static void perspective(Matrix3x3 &M, float px, float py);
+    this function is used to accumulate a perspective matrix.
+
+3.  static ImageData* warper(ImageData* inputImage, Matrix3x3 &M, bool flag);
+    this function is used to warp an image with a matrix. flag = 0 means donot use repair strategy, and flag =1
+    means use bilinear and superSampling strategy to repair image.
+
+4.  static float bilinear(ImageData* inputImage, Vector3d& vecSrc, int k);
+    use bilinear strategy to get the average weighted value of the pixel in input image
+
+5.  static float superSampling(ImageData* inputImage, Matrix3x3& M, Vector3d& vecDes, int k, float s, int cx, int cy, int md, bool flag);
+    superSampling strategy, and flag = 0 means perspective warp, and flag = 1 means twirl warp
+
+6.  static Vector3d getPespOrigPos(Matrix3x3 &M, Vector3d vecDes);
+    use inverse mapping to get the position in input image for perspective warp
+
+7.  static Vector3d getTwirlOrigPos(Vector3d& vecDst, float s, int cx, int cy, int md);
+    use inverse mapping to get the position in input image for twirl warp
+
+
+
+
+

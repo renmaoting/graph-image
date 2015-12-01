@@ -198,12 +198,13 @@ float Manipulation::bilinear(ImageData* inputImage, Vector3d& vecSrc, int k)
     Vector2d vecF(1- b,b);
     Vector2d vecB(1- a,a);
     Matrix2x2 m(value1, value2, value3, value4);
+
     // value = (1- b, b) * M * (1- a, a)
     float value = vecF * m * vecB;
     return value;
 }
 
-float Manipulation::superSampling(ImageData* inputImage, Matrix3x3& M, Vector3d& vecDes, int k)
+float Manipulation::superSampling(ImageData* inputImage, Matrix3x3& M, Vector3d& vecDes, int k,float s, int cx, int cy,int md, bool flag)
 {
     if(inputImage== NULL)
     {
@@ -212,30 +213,59 @@ float Manipulation::superSampling(ImageData* inputImage, Matrix3x3& M, Vector3d&
     }
     
     // choose 9 pixels for each super sample
-    float leftMost= (vecDes[0] -0.5)>0?(vecDes[0] -0.5):0;
-    float topMost= (vecDes[1]+0.5)<inputImage->height?(vecDes[1]+0.5):(inputImage->height - 0.5);
-    float rightMost= (vecDes[0] +0.5)<inputImage->width?(vecDes[0] +0.5):(inputImage->width -0.5);
-    float bottomMost= (vecDes[1] -0.5)>0?(vecDes[1]-0.5):0;
+    float leftMost = vecDes[0] - 0.5;
+    float topMost = vecDes[1] +0.5;
+    float rightMost = vecDes[0] + 0.5;
+    float bottomMost = vecDes[1] - 0.5;
     
     int num =0;
     float sum =0;
-    for(int i = bottomMost*10; i < topMost*10; i+=5)
+    for(int i = bottomMost*10; i <= topMost*10; i+=5)
     {
-        for(int j = leftMost*10; j < rightMost*10; j+=5)
+        for(int j = leftMost*10; j <= rightMost*10; j+=5)
         {
             Vector3d tem(j/10.0, i/10.0, 1);
-            Vector3d vecSrc = M * tem;                
-            if(vecSrc[2] != 0 && vecSrc[2] != 1)// normalization when the w component is not 1
-            {
-                vecSrc[0] /= vecSrc[2];
-                vecSrc[1] /= vecSrc[2];
-                vecSrc[2] /= 1;
-            }
-            sum += bilinear(inputImage, vecSrc, k);
+            Vector3d vecSrc;
+            if(flag == 0)// perspective
+                vecSrc = getPespOrigPos(M, tem);
+            else if(flag == 1)
+                vecSrc = getTwirlOrigPos(tem, s, cx, cy, md); 
+
+            // judge the boundary
+            if(vecSrc[1] >= inputImage->height || vecSrc[1] < 0 || vecSrc[0] < 0 || vecSrc[0] >= inputImage->width)
+                sum += 0;
+            else
+                sum += bilinear(inputImage, vecSrc, k);
+            num++;
         }
     }
 
     return sum/num;
+}
+
+Vector3d Manipulation::getPespOrigPos(Matrix3x3 &M, Vector3d vecDes)
+{
+    Vector3d vecSrc = M * vecDes;                
+    if(vecSrc[2] != 0 && vecSrc[2] != 1)// normalization when the w component is not 1
+    {
+        vecSrc[0] /= vecSrc[2];
+        vecSrc[1] /= vecSrc[2];
+        vecSrc[2] /= 1;
+    }
+    
+    return vecSrc; 
+}
+
+Vector3d Manipulation::getTwirlOrigPos(Vector3d& vecDes, float s, int cx, int cy, int md)
+{
+    float r = sqrt(pow(vecDes[0]-cx, 2) + pow(vecDes[1] -cy, 2) );
+    float a = s * (r - md)/md;
+    float theta = atan2(vecDes[1]- cy, vecDes[0] - cx) ;
+    int u = round(r * cos(theta + a) + cx);// get original pixel position
+    int v = round(r * sin(theta + a) + cy);
+    
+    Vector3d vecSrc(u, v, 1);
+    return vecSrc;
 }
 
 ImageData* Manipulation::warper(ImageData* inputImage, Matrix3x3 &M, bool flag)
@@ -258,14 +288,7 @@ ImageData* Manipulation::warper(ImageData* inputImage, Matrix3x3 &M, bool flag)
         for(int j =0; j< imageData->width; j++)
         {
             Vector3d vecDes(j+leftMost,i+topMost, 1); // destination position
-            vecSrc = bwMap * vecDes;
-            
-            if(vecSrc[2] != 0 && vecSrc[2] != 1)// normalization when the w component is not 1
-            {
-                vecSrc[0] /= vecSrc[2];
-                vecSrc[1] /= vecSrc[2];
-                vecSrc[2] /= 1;
-            }
+            vecSrc = getPespOrigPos(bwMap, vecDes);
 
             // handle the pixels that out of original image
             if(vecSrc[1] >= inputImage->height || vecSrc[1] < 0 || vecSrc[0] < 0 || vecSrc[0] >= inputImage->width)
@@ -284,8 +307,7 @@ ImageData* Manipulation::warper(ImageData* inputImage, Matrix3x3 &M, bool flag)
                     else if(flag == 1)
                     {
                         // use bilinear interpolation
-                        float value = bilinear(inputImage, vecSrc, k);
-                        //float value = superSampling(inputImage, bwMap,vecDes, k);
+                        float value = superSampling(inputImage, bwMap,vecDes, k, 0, 0, 0, 0,0);
                         imageData->pixels[i *imageData->width*imageData->channels + j* imageData->channels +k] = value;
                     }
                 }
@@ -295,7 +317,7 @@ ImageData* Manipulation::warper(ImageData* inputImage, Matrix3x3 &M, bool flag)
     return imageData;
 }
 
-ImageData* Manipulation::twirl(ImageData* inputImage, float s, float cx, float cy)
+ImageData* Manipulation::twirl(ImageData* inputImage, float s, float cx, float cy, bool flag)
 {
     //this function will twirl image
     if(inputImage== NULL)
@@ -316,18 +338,14 @@ ImageData* Manipulation::twirl(ImageData* inputImage, float s, float cx, float c
     int cx2 = cx * inputImage->width;//  centerX
     int cy2 = cy * inputImage->height;// centerY
     int md = min(inputImage->width, inputImage->height);
-    float theta;
     for(int i =0; i < imageData->height; i++)
     {
         for(int j =0; j < imageData->width; j++)
         {
-            // use inverse mapping
-            // md = min(WIDTH, HEIGHT)
-            float r = sqrt(pow(j-cx2, 2) + pow(i -cy2, 2) );
-            float a = s * (r - md)/md;
-            theta = atan2(i - cy2, j - cx2) ;
-            int u = round(r * cos(theta + a) + cx2);// get original pixel position
-            int v = round(r * sin(theta + a) + cy2);
+            Vector3d vecDes(j,i, 0);
+            Vector3d vecSrc = getTwirlOrigPos(vecDes, s, cx2, cy2, md);
+            int u = vecSrc[0];
+            int v = vecSrc[1];
 
             if(u < 0 || u >= inputImage->width || v <0 || v >= inputImage->height)// handle the pixels that out of original image
             {
@@ -340,8 +358,17 @@ ImageData* Manipulation::twirl(ImageData* inputImage, float s, float cx, float c
             {
                 for(int k =0; k < imageData->channels; k++)// inverse mapping
                 {
-                    imageData->pixels[i* imageData->width * imageData->channels + j* imageData->channels + k] = 
-                        inputImage->pixels[v * inputImage->width * inputImage->channels + u * inputImage->channels + k]; 
+                    if(flag == 0)// normal twirl
+                    { 
+                        imageData->pixels[i* imageData->width * imageData->channels + j* imageData->channels + k] = 
+                            inputImage->pixels[v * inputImage->width * inputImage->channels + u * inputImage->channels + k]; 
+                    }
+                    else if(flag == 1)// use repair method
+                    {
+                        Matrix3x3 tem;
+                        float value = superSampling(inputImage, tem,vecDes, k, s, cx2, cy2, md, 1);
+                        imageData->pixels[i *imageData->width*imageData->channels + j* imageData->channels +k] = value;
+                    }
                 }
             }
         }

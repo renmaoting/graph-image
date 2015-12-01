@@ -20,11 +20,13 @@ public:
     static void rotate(Matrix3x3 &M, float theta);
     static void shear(Matrix3x3 &M, float shx, float shy); 
     static void scale(Matrix3x3 &M, float sx, float sy);
-    static ImageData* twirl(ImageData* inputImage, float s, float cx, float cy);
+    static ImageData* twirl(ImageData* inputImage, float s, float cx, float cy, bool flag);
     static void perspective(Matrix3x3 &M, float px, float py);
     static ImageData* warper(ImageData* inputImage, Matrix3x3 &M, bool flag);
     static float bilinear(ImageData* inputImage, Vector3d& vecSrc, int k);
-    static float superSampling(ImageData* inputImage, Matrix3x3& M, Vector3d& vecDes, int k);
+    static float superSampling(ImageData* inputImage, Matrix3x3& M, Vector3d& vecDes, int k, float s, int cx, int cy, int md, bool flag);
+    static Vector3d getPespOrigPos(Matrix3x3 &M, Vector3d vecDes);
+    static Vector3d getTwirlOrigPos(Vector3d& vecDst, float s, int cx, int cy, int md);
 private:
     static ImageData* fwdTransform(ImageData* inputImage, Matrix3x3& M, int& leftMost, int& topMost);
 };
