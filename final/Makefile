@@ -31,7 +31,7 @@ PROJECT = warper
 
 #list a .o file for each .cpp file that you will compile
 #this makefile will compile each cpp separately before linking
-OBJECTS = warper.o imageIO.o manipulation.o Matrix.o Vector.o Utility.o 
+OBJECTS = warper.o imageIO.o manipulation.o 
 
 #this target does the linking step  
 all: ${PROJECT}

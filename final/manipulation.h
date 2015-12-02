@@ -15,6 +15,6 @@ class Manipulation
 public:
     static ImageData* verticalFlip(ImageData* inputImage);
     static ImageData* horizFlip(ImageData* inputImage);
-    static ImageData* change(ImageData* inputImage);
+    static ImageData* change(ImageData* inputImage, int radius, int intensityLevel);
 };
 #endif
