@@ -43,7 +43,7 @@ ImageData* Manipulation::horizFlip(ImageData* inputImage)
     return imageData;
 }
 
-ImageData* Manipulation::change(ImageData* inputImage, int radius, int intensityLevel)
+ImageData* change(ImageData* inputImage, int radius, int intensityLevel, const std::vector<Point*>& pVec, int buttonType)
 {
     // this function mainly convert a normal image to an oil image
     if(inputImage== NULL || radius <= 0)
@@ -81,7 +81,7 @@ ImageData* Manipulation::change(ImageData* inputImage, int radius, int intensity
                             sum+= pixels[(i+m)* inputImage->width * inputImage->channels + (j+n)*inputImage->channels + k];
                         currentIntensity = sum* intensityLevel /3;// compute intensity
                         intensityHash[currentIntensity]++;
-                        if(intensityHash[currentIntensity] > maxNum)// find the most appear intesity
+                        if(intensityHash[currentIntensity] > maxNum)// find the most repeated intesity
                         {
                             maxNum = intensityHash[currentIntensity];
                             maxIndex = currentIntensity; 

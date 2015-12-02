@@ -10,11 +10,18 @@
 #include <iostream>
 #include "imageIO.h"
 
+// this struct is a point
+typedef struct Point
+{
+    int x;
+    int y;
+}Point;
+
 class Manipulation
 {
 public:
     static ImageData* verticalFlip(ImageData* inputImage);
     static ImageData* horizFlip(ImageData* inputImage);
-    static ImageData* change(ImageData* inputImage, int radius, int intensityLevel);
+    static ImageData* change(ImageData* inputImage, int radius, int intensityLevel, const std::vector<Point*>& pVec, int buttonType);
 };
 #endif

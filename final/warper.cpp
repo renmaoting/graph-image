@@ -24,7 +24,7 @@ ImageData*          displayImg= NULL;//display this structure
 vector<ImageData*>  imageBuffer;
 vector<ImageData*>  resultImg;
 vector<ImageData*>  buttonImg;
-ImageData*          frameImg;
+vector<Point*>      pointVec;
 int                 windowWidth;
 int                 windowHeight;
 bool                flag = true;
@@ -32,28 +32,27 @@ float               ratioX = 1;//the parameter of glPixelZoom, use to scale imag
 float               ratioY = 1;
 int                 currentImage;//the image displaying now
 int                 totalImage;//the number of image user provided 
-bool                circle = false;
-bool                triangle= false;
-bool                quadra= false;
+int                 buttonType =-1;//state 0: quadra;   state 1: triangle;  state 2:circle;
+int                 step =0;// record the you are in which operator
 
 void adujstScale()
 {
     // window's width < iamge's witdth
-    if(displayImg->width > windowWidth-130*ratioX && displayImg->height <= windowHeight)
+    if(displayImg->width + buttonImg[0]->width*2 > windowWidth && displayImg->height <= windowHeight)
     {
-        ratioX = (windowWidth-130*ratioX)/(float)displayImg->width;
+        ratioX = windowWidth/(float)(displayImg->width + buttonImg[0]->width*2);
         ratioY = ratioX;
     }
     // window's height < image's height 
-    else if(displayImg->width -130*ratioX<= windowWidth && displayImg->height > windowHeight)
+    else if(displayImg->width + buttonImg[0]->width*2<= windowWidth && displayImg->height > windowHeight)
     {
         ratioY = windowHeight/(float)displayImg->height;
         ratioX = ratioY;
     }
     // both window's width and height < image size 
-    else if(displayImg->width > windowWidth -130 *ratioX && displayImg->height > windowHeight)
+    else if(displayImg->width + buttonImg[0]->width*2> windowWidth && displayImg->height > windowHeight)
     {
-        ratioX = (windowWidth-130*ratioX) /(float)displayImg->width;
+        ratioX = (windowWidth) /(float)(displayImg->width + buttonImg[0]->width*2);
         ratioY = windowHeight/(float)displayImg->height;
     }
 }
@@ -63,12 +62,12 @@ void display(void)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     adujstScale(); 
     int posDrawX, posDrawY;
-    posDrawX = windowWidth - displayImg->width*ratioX - 130*ratioY;
-    posDrawY = windowHeight - displayImg->height*ratioY;
+    posDrawX = windowWidth - (displayImg->width + buttonImg[0]->width*2);
+    posDrawY = windowHeight - displayImg->height;
     
     ////if the window's width is small than image, then should draw the image in left x = 0
-    //if(windowWidth - displayImg->width- 130*ratioX < 0) posDrawX = 0;
-    //if(windowHeight - displayImg->height < 0) posDrawY = 0;
+    if(windowWidth - (displayImg->width + buttonImg[0]->width*2) < 0) posDrawX = 0;
+    if(windowHeight - displayImg->height < 0) posDrawY = 0;
     //from where the image should be drawn
     glRasterPos2i(posDrawX/2, posDrawY/2);
     glPixelZoom(ratioX, ratioY);
@@ -80,9 +79,11 @@ void display(void)
     if(displayImg->channels == 4)
         glDrawPixels(displayImg->width, displayImg->height, GL_RGBA, GL_FLOAT, displayImg->pixels);
 
+    // draw button
     for(unsigned int i =0; i< 3; i++)
     {
-        glRasterPos2i(windowWidth -110*ratioX, windowHeight/2 - 120*ratioY+ ratioY*i*80);
+        glRasterPos2i(posDrawX/2 + displayImg->width*ratioX + buttonImg[0]->width * ratioX, 
+                windowHeight/2 - 7/2 * buttonImg[0]->height*ratioY+ 3*ratioY*i*buttonImg[0]->height);
         glDrawPixels(buttonImg[i]->width, buttonImg[i]->height, GL_RGBA, GL_FLOAT, buttonImg[i]->pixels);
     }
 
@@ -129,16 +130,100 @@ void handleKey(unsigned char key, int x, int y)
     }
 }
 
+void addPoint(int x, int y)
+{
+    Point* tem = new Point();
+    tem->x = x;
+    tem->y = y;
+    pointVec.push_back(tem);
+}
+
 void mouseClick(int button, int state, int x, int y)
 {
     if(state == 0)
     {
         cout<< "screen x = " << x << " y = " << y << endl;
-        x = x - (windowWidth-130*ratioX- displayImg->width*ratioX)/2;//get the pixel row
+        x = x - (windowWidth- (displayImg->width + buttonImg[0]->width*2)*ratioX)/2;//get the pixel row
         y = windowHeight - y - (windowHeight - displayImg->height*ratioY)/2;// get the pixel column
         //if(x < 0 || x >= displayImg->width) x = 0;//when you click a illegal section, set a default pixel
         //if(y < 0 || y >= displayImg->height) y =0;
         cout<< "image x = " << x << " y = " << y << endl;
+
+        switch (buttonType)
+        {
+            case 0:// drawing a quadra
+            case 2:// drawing a circle
+                if(step < 2)
+                {
+                    if(x >= displayImg->width || x < 0 || y >= displayImg->height || y < 0)
+                        cout << "you select an illegal area, please select again!" <<endl;
+                    else
+                    {
+                        addPoint(x, y);
+                        step++;
+                    }
+                    if(step >=2)// finish drawing
+                    {
+                        Manipulation::change(imageBuffer[currentImage], 5, 20, pointVec, buttonType); 
+                        buttonType = -1;
+                        step = 0;
+                    }
+                }
+                break;
+            case 1:// draw a triangle
+                if(step < 3)
+                {
+                    if(x >= displayImg->width || x < 0 || y >= displayImg->height || y < 0)
+                        cout << "you select an illegal area, please select again!" <<endl;
+                    else
+                    {
+                        addPoint(x, y);
+                        step++;
+                    }
+                    if(step >= 3)// finish drawing
+                    {
+                        Manipulation::change(imageBuffer[currentImage], 5, 20, pointVec, buttonType); 
+                        buttonType = -1;
+                        step = 0;
+                    }
+                }
+
+            default:
+                break;
+        }
+        
+        int x1 = displayImg->width* ratioX + buttonImg[0]->width*ratioX;
+        int x2 = displayImg->width* ratioX + 2*buttonImg[0]->width*ratioX;
+        int y1 = (displayImg->height/2 + buttonImg[0]->height * 4)* ratioY;
+        int y2 = (displayImg->height/2 + buttonImg[0]->height * 3)* ratioY;
+
+        // if user is clicking quadra button
+        if(buttonType != 0&& (x >= x1 && x <= x2) && (y <= y1 && y >= y2))
+        {
+            pointVec.clear();
+            cout << "quadra click!" << endl;
+            buttonType = 0;
+        }
+
+        y1 = (displayImg->height/2 + buttonImg[0]->height * 1)* ratioY;
+        y2 = (displayImg->height/2 + buttonImg[0]->height * 0)* ratioY;
+        // if user is clicking triangle button
+        if(buttonType != 1 && (x >= x1 && x <= x2) && (y <= y1 && y >= y2))
+        {
+            pointVec.clear();
+            cout << "triangle click!" << endl;
+            buttonType = 1;
+        }
+
+        y1 = (displayImg->height/2 + buttonImg[0]->height * (-2))* ratioY;
+        y2 = (displayImg->height/2 + buttonImg[0]->height * (-3))* ratioY;
+        // if user is clicking triangle button
+        if(buttonType != 2&& (x >= x1 && x <= x2) && (y <= y1 && y >= y2))
+        {
+            pointVec.clear();
+            cout << "circle click!" << endl;
+            buttonType = 2;
+        }
     }
 }
 
@@ -147,7 +232,6 @@ void changeWindowsSize(GLsizei width, GLsizei height)
     windowWidth = width;
     windowHeight = height;
 }
-
 
 void specialKeyHandle(int key, int x, int y)
 {
@@ -201,14 +285,12 @@ void init(int argc, char* argv[])
     char btn1[20] = "circle.png";
     char btn2[20] = "triangle.png";
     char btn3[20] = "quadra.png";
-    char frame[20] = "frame.png";
     imageData =Manipulation::verticalFlip(ImageIO::readImage(btn1));
     buttonImg.push_back(imageData);
     imageData =Manipulation::verticalFlip(ImageIO::readImage(btn2));
     buttonImg.push_back(imageData);
     imageData =Manipulation::verticalFlip(ImageIO::readImage(btn3));
     buttonImg.push_back(imageData);
-    frameImg =Manipulation::verticalFlip(ImageIO::readImage(frame));
 
     for(int i = 1; i < argc -1; i++)
     {

@@ -32,7 +32,6 @@ typedef struct Data{
     }
 }ImageData;
 
-
 class ImageIO
 {
 public:
