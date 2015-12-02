@@ -67,10 +67,12 @@ ImageData* Manipulation::change(ImageData* inputImage, int radius, int intensity
             memset(gAvg, 0, sizeof(gAvg));
             memset(bAvg, 0, sizeof(bAvg));
 
+            // from [i - radius, j - radius] to [i + radius, j + radius]
             for(int m = -radius; m <= radius ; m++)
             {
                 for(int n = -radius; n <= radius; n++)
                 {
+                    // judge if this pixel is in the image
                     if((i + m >=0 && i + m < imageData->height) && (j + n >= 0 && j +n < imageData->width))
                     {
                         int currentIntensity;
@@ -93,7 +95,7 @@ ImageData* Manipulation::change(ImageData* inputImage, int radius, int intensity
                 }
             }
 
-            // assign value to the new iamge
+            // assign average value to the new iamge
             imageData->pixels[i* inputImage->width * inputImage->channels + j*inputImage->channels]    = rAvg[maxIndex] / intensityHash[maxIndex];
             imageData->pixels[i* inputImage->width * inputImage->channels + j*inputImage->channels +1] = gAvg[maxIndex] / intensityHash[maxIndex];
             imageData->pixels[i* inputImage->width * inputImage->channels + j*inputImage->channels +2] = bAvg[maxIndex] / intensityHash[maxIndex];
