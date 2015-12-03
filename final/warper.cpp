@@ -22,7 +22,7 @@ char*               readFilename = NULL;
 ImageData*          imageData = NULL;
 ImageData*          displayImg= NULL;//display this structure
 vector<ImageData*>  imageBuffer;
-vector<ImageData*>  resultImg;
+ImageData*          resultImg = NULL;
 vector<ImageData*>  buttonImg;
 vector<Point*>      pointVec;
 int                 windowWidth;
@@ -109,15 +109,10 @@ void handleKey(unsigned char key, int x, int y)
             break;
         case 's':
         case 'S':
-            flag = !flag;
-            if(flag == true)
+            if(displayImg == resultImg)
                 displayImg = imageBuffer[currentImage];
-            else
-            {
-                if(resultImg[currentImage] == NULL)
-                    resultImg[currentImage] = Manipulation::change(imageBuffer[currentImage], 5, 20);
-                displayImg = resultImg[currentImage];
-            }
+            else if(resultImg != NULL)
+                displayImg = resultImg;
             display();
             break;
 
@@ -138,6 +133,22 @@ void addPoint(int x, int y)
     pointVec.push_back(tem);
 }
 
+void adjustVec()
+{
+    if(pointVec[0]->x > pointVec[1]->x)
+    {
+        int tem = pointVec[0]->x;
+        pointVec[0]->x = pointVec[1]->x;
+        pointVec[1]->x = tem;
+    }
+    if(pointVec[0]->y > pointVec[1]->y)
+    {
+        int tem = pointVec[0]->y;
+        pointVec[0]->y = pointVec[1]->y;
+        pointVec[1]->y = tem;
+    }
+}
+
 void mouseClick(int button, int state, int x, int y)
 {
     if(state == 0)
@@ -149,47 +160,30 @@ void mouseClick(int button, int state, int x, int y)
         //if(y < 0 || y >= displayImg->height) y =0;
         cout<< "image x = " << x << " y = " << y << endl;
 
-        switch (buttonType)
+        // select point
+        if(((buttonType == 0 || buttonType == 2)&& step < 2 ) || (buttonType == 1 && step < 3))
         {
-            case 0:// drawing a quadra
-            case 2:// drawing a circle
-                if(step < 2)
-                {
-                    if(x >= displayImg->width || x < 0 || y >= displayImg->height || y < 0)
-                        cout << "you select an illegal area, please select again!" <<endl;
-                    else
-                    {
-                        addPoint(x, y);
-                        step++;
-                    }
-                    if(step >=2)// finish drawing
-                    {
-                        Manipulation::change(imageBuffer[currentImage], 5, 20, pointVec, buttonType); 
-                        buttonType = -1;
-                        step = 0;
-                    }
-                }
-                break;
-            case 1:// draw a triangle
-                if(step < 3)
-                {
-                    if(x >= displayImg->width || x < 0 || y >= displayImg->height || y < 0)
-                        cout << "you select an illegal area, please select again!" <<endl;
-                    else
-                    {
-                        addPoint(x, y);
-                        step++;
-                    }
-                    if(step >= 3)// finish drawing
-                    {
-                        Manipulation::change(imageBuffer[currentImage], 5, 20, pointVec, buttonType); 
-                        buttonType = -1;
-                        step = 0;
-                    }
-                }
+            if(x >= displayImg->width || x < 0 || y >= displayImg->height || y < 0)
+                cout << "you select an illegal area, please select again!" <<endl;
+            else
+            {
+                addPoint(x, y);
+                step++;
+                cout << "you have select " << step << "th point" << endl;
+            }
+        }
 
-            default:
-                break;
+        // when user have select enough point
+        if(((buttonType == 0 || buttonType == 2)&& step == 2 ) || (buttonType == 1 && step == 3))
+        {
+            step = 0;
+            if(buttonType == 0)//if buttonType is quadra, should convert the two point to left-bottom and right-top 
+                adjustVec();
+            cout << "OK, now the area will be convert to oil style!" << endl;
+            resultImg = Manipulation::change(imageBuffer[currentImage], 2, 40, pointVec, buttonType); 
+            displayImg = resultImg;
+            buttonType = -1;
+            display();
         }
         
         int x1 = displayImg->width* ratioX + buttonImg[0]->width*ratioX;
@@ -271,10 +265,6 @@ void init(int argc, char* argv[])
     currentImage = 0;
     totalImage = argc - 2;
     imageBuffer.resize(totalImage);
-    resultImg.resize(totalImage);
-    // inital the resultImg
-    for(unsigned int i =0; i< resultImg.size(); i++)
-        resultImg[i] = NULL;
  
     //read in the input image
     readFilename = argv[1];

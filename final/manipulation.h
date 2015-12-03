@@ -9,6 +9,7 @@
 #define _MANIPULATION_H
 #include <iostream>
 #include "imageIO.h"
+#include <vector>
 
 // this struct is a point
 typedef struct Point
@@ -23,5 +24,15 @@ public:
     static ImageData* verticalFlip(ImageData* inputImage);
     static ImageData* horizFlip(ImageData* inputImage);
     static ImageData* change(ImageData* inputImage, int radius, int intensityLevel, const std::vector<Point*>& pVec, int buttonType);
+
+private:
+    static inline bool checkQuadra(const std::vector<Point*>& pVec, int x, int y);
+    //static inline bool checkTriangle(const std::vector<Point*>& pVec, int x, int y);
+    static inline bool checkCircle(const std::vector<Point*>& pVec, int x, int y);
+    static inline int cross(const Point* a, const Point* b, const Point* p){
+        return (b->x - a->x)*(p->y - a->y) - (b->y - a->y)*(p->x - a->x);
+    }
+    static inline int toLeft(const Point* a, const Point* b, const Point* p) { return cross(a, b, p) > 0;}
+    static inline int checkTriangle(const Point* p, const Point* a, const Point* b, const Point* c);
 };
 #endif

@@ -7,6 +7,7 @@
 
 #include "manipulation.h"
 #include <cstring>
+#include <cmath>
 
 
 ImageData* Manipulation::verticalFlip(ImageData* inputImage)
@@ -43,7 +44,59 @@ ImageData* Manipulation::horizFlip(ImageData* inputImage)
     return imageData;
 }
 
-ImageData* change(ImageData* inputImage, int radius, int intensityLevel, const std::vector<Point*>& pVec, int buttonType)
+bool Manipulation::checkQuadra(const std::vector<Point*>& pVec, int x, int y)
+{
+    if(x > pVec[0]->x && y > pVec[0]->y && x < pVec[1]->x && y < pVec[1]->y)
+        return true;
+    return false;
+}
+
+int Manipulation::checkTriangle(const Point* p, const Point* a, const Point* b, const Point* c)
+{
+    bool res = toLeft(a, b, p);
+    if(res != toLeft(b, c, p))
+        return false;
+    if(res != toLeft(c, a, p))
+        return false;
+    if(cross(a,b,c) == 0)
+        return false;
+    return true;
+}
+
+//bool Manipulation::checkTriangle(const std::vector<Point*>& pVec, int x, int y)
+//{
+ /*   //this function is used to judge if (x, y) is in this triangle area
+    // A(a1, a2), B(b1, b2), C(c1, c2)
+    // BC: fa(x, y) = 0;
+    // AC: fb(x, y) = 0;
+    // AB: fc(x, y) = 0;
+    // f(x,y) = (y - y2)(x1 - x2) - (x - x2)(y1 - y2)
+    //
+    //if (x, y) is in this triangle area, then it should satisfy this condition
+    //fa(x, y) * fa(a1, a2) > 0
+    //fb(x, y) * fb(b1, b2) > 0
+    //fc(x, y) * fc(c1, c2) > 0
+    int m1 = (    y      - pVec[1]->y) *(pVec[0]->x - pVec[1]->x) - (     x     - pVec[1]->x)*(pVec[0]->y - pVec[1]->y);    
+    int m2 = (pVec[2]->y - pVec[1]->y) *(pVec[0]->x - pVec[1]->x) - (pVec[2]->x - pVec[1]->x)*(pVec[0]->y - pVec[1]->y);
+    int n1 = (    y      - pVec[2]->y) *(pVec[0]->x - pVec[2]->x) - (     x     - pVec[2]->x)*(pVec[0]->y - pVec[2]->y);    
+    int n2 = (pVec[1]->y - pVec[2]->y) *(pVec[0]->x - pVec[2]->x) - (pVec[1]->x - pVec[2]->x)*(pVec[0]->y - pVec[2]->y);    
+    int k1 = (    y      - pVec[2]->y) *(pVec[1]->x - pVec[2]->x) - (     x     - pVec[2]->x)*(pVec[1]->y - pVec[2]->y);    
+    int k2 = (pVec[0]->y - pVec[2]->y) *(pVec[1]->x - pVec[2]->x) - (pVec[0]->x - pVec[2]->x)*(pVec[1]->y - pVec[2]->y);    
+    if(m1*m2 > 0 && n1*n2 > 0 && k1*k2 > 0)
+        return true;
+    return false;*/
+//}
+
+bool Manipulation::checkCircle(const std::vector<Point*>& pVec, int x, int y)
+{
+    int d1 = pow(pVec[0]->x - pVec[1]->x, 2.0) + pow(pVec[0]->y - pVec[1]->y, 2.0);// this is r*r
+    int d2 = pow(pVec[0]->x - x, 2.0) + pow(pVec[0]->y - y, 2.0);// this is the distance* distance from center
+    if(d1 > d2)
+        return true;
+    return false;
+}
+
+ImageData* Manipulation::change(ImageData* inputImage, int radius, int intensityLevel, const std::vector<Point*>& pVec, int buttonType)
 {
     // this function mainly convert a normal image to an oil image
     if(inputImage== NULL || radius <= 0)
@@ -60,6 +113,17 @@ ImageData* change(ImageData* inputImage, int radius, int intensityLevel, const s
     {
         for(int j =0; j< imageData->width; j++)
         {
+            // this pixel is not in the selected area
+            if((buttonType == 0 && !checkQuadra(pVec, j, i))        // when the area is a quadra
+                || (buttonType == 1 && !checkTriangle(pVec, j, i))  // when the area is a triangle
+                || (buttonType == 2 && !checkCircle(pVec, j, i)))   // when the area is a circle
+            {
+                for(int k =0; k < imageData->channels; k++)
+                    imageData->pixels[i* imageData->width * imageData->channels + j*imageData->channels +k] = 
+                        inputImage->pixels[i* imageData->width * imageData->channels + j*imageData->channels +k];
+                continue;
+            }
+
             int intensityHash[256],  maxNum=0, maxIndex =0;
             float rAvg[256], gAvg[256], bAvg[256];
             memset(intensityHash, 0, sizeof(intensityHash));

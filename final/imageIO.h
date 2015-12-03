@@ -8,7 +8,6 @@
 #define IMAGEIO_H
 
 #include <GL/glut.h>
-#include <vector>
 
 typedef struct Data{
     int width;
@@ -37,7 +36,6 @@ class ImageIO
 public:
     static ImageData* readImage(char* filename);//read the image information into a structure
     static bool writeData(char* filename, ImageData* originalImageData);
-    static bool readFilter(std::vector<std::vector<float> >& vecFilt, char* filename);
 };
 
 #endif

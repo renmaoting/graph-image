@@ -89,35 +89,3 @@ bool ImageIO::writeData(char* filename, ImageData* originalImageData)
     return true;
 }
 
-bool ImageIO::readFilter(std::vector<std::vector<float> >& vecFilt,char* filename)
-{
-    if(filename == NULL )
-    {
-        std::cout << "ImageIO::readFilt filename shouldn't be NULL!" << std::endl;
-        exit(-1);
-    }
-    int N;
-    std::ifstream fin;
-    fin.open(filename);
-    if(!fin.is_open())
-    {
-        std::cout << "ImageIO::readFilt can not open " << filename << std::endl;
-        exit(-1);
-    }
-    vecFilt.clear();
-    fin >> N;
-    for(int i =0; i < N; i++)
-    {
-        std::vector<float> vec;
-        float value;
-        for(int j =0; j < N; j++)
-        {
-            fin>> value;
-            vec.push_back(value); 
-        }
-        vecFilt.push_back(vec);
-        vec.clear();
-    }
-    fin.close();
-    return true;
-}
