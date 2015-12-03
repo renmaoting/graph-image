@@ -51,8 +51,12 @@ bool Manipulation::checkQuadra(const std::vector<Point*>& pVec, int x, int y)
     return false;
 }
 
-int Manipulation::checkTriangle(const Point* p, const Point* a, const Point* b, const Point* c)
+int Manipulation::checkTriangle(const std::vector<Point*>& pVec,int x, int y)
 {
+    Point* p = new Point(x, y);
+    Point* a = pVec[0];
+    Point* b = pVec[1];
+    Point* c = pVec[2];
     bool res = toLeft(a, b, p);
     if(res != toLeft(b, c, p))
         return false;

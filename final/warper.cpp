@@ -127,9 +127,7 @@ void handleKey(unsigned char key, int x, int y)
 
 void addPoint(int x, int y)
 {
-    Point* tem = new Point();
-    tem->x = x;
-    tem->y = y;
+    Point* tem = new Point(x, y);
     pointVec.push_back(tem);
 }
 

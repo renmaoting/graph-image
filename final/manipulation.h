@@ -14,6 +14,7 @@
 // this struct is a point
 typedef struct Point
 {
+    Point(int X, int Y):x(X), y(Y){}
     int x;
     int y;
 }Point;
@@ -33,6 +34,6 @@ private:
         return (b->x - a->x)*(p->y - a->y) - (b->y - a->y)*(p->x - a->x);
     }
     static inline int toLeft(const Point* a, const Point* b, const Point* p) { return cross(a, b, p) > 0;}
-    static inline int checkTriangle(const Point* p, const Point* a, const Point* b, const Point* c);
+    static int checkTriangle(const std::vector<Point*>& pVec,int x, int y);
 };
 #endif
